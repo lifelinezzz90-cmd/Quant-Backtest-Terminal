@@ -1,0 +1,9 @@
+# A股量化回测系统 - 核心依赖清单
+# 对应《任务书》第三部分与《IMPLEMENTATION_PLAN.md》核心依赖
+# 推荐安装命令：pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+flask>=2.3.0
+akshare>=1.12.0
