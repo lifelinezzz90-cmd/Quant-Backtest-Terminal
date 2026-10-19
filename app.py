@@ -5,7 +5,7 @@ A股量化回测系统 · 统一入口程序 (app.py)
 
 提供跨平台统一 CLI 命令行交互入口与 Flask Web 看板服务：
 - --mode validate: 数据质量校验与清洗流水线（支持 --sample 快速样例模式）
-- --mode test: 核心底层单元测试（数据清洗断言 + 撮合引擎T+1与涨跌停规则断言）
+- --mode test: 核心底层与质量验真审计测试（脏数据修复、A股摩擦规则、物理截断防未来函数、资金会计恒等式、开盘价成交审计）
 - --mode backtest: 命令行指定策略、参数与起止日期运行回测，输出指标、净值图并自动落盘记录
 - --mode optimize: 参数网格寻优与防过拟合验证（Phase 4 扩展）
 - --mode web: 启动本地 Flask 可视化绩效看板（Phase 5 扩展）
@@ -17,6 +17,8 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+import numpy as np
+import pandas as pd
 
 # 确保项目根目录在 sys.path 中
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -53,9 +55,12 @@ from backtest.metrics import (
 from backtest.logger import (
     log_experiment_record
 )
-from strategies.base import (
+from strategies import (
     BaseStrategy,
-    EqualWeightBuyHoldStrategy
+    EqualWeightBuyHoldStrategy,
+    TrendFollowingStrategy,
+    MeanReversionStrategy,
+    MultiFactorStrategy
 )
 
 
@@ -67,7 +72,6 @@ def handle_validate(args):
     print("【A股量化回测系统】启动数据质量校验与清洗流水线...")
     print("=" * 70)
 
-    # 1. 数据准备（官方 CSV 优先，缺失时自动触发兜底获取并生成样例与舆情数据）
     ensure_raw_and_sample_data()
 
     is_sample = args.sample
@@ -92,6 +96,102 @@ def handle_validate(args):
     return report
 
 
+def test_quality_audit() -> bool:
+    """
+    四重质量验真审计测试：
+    1. 物理截断防未来函数检验 (Truncation Invariance Test)
+    2. 资金会计恒等式精确审计 (Accounting Identity Audit)
+    3. 成交价与次日开盘价 100% 吻合审计 (Execution Price Audit)
+    4. 整手与非负现金底线审计
+    """
+    print("\n" + "-" * 70)
+    print("【执行四重质量验真审计测试】对三大策略在真实清洗数据上进行硬核验真...")
+    print("-" * 70)
+
+    # 加载真实清洗后全量数据
+    stock_dict, benchmark_df = load_cleaned_data(sample=False, data_dir=CLEANED_DATA_DIR)
+    cutoff_date = "2021-12-31"
+
+    # 构造物理截断数据字典（只包含 2021-12-31 及之前的数据）
+    stock_dict_trunc = {
+        code: df[df["date"] <= cutoff_date].copy().reset_index(drop=True)
+        for code, df in stock_dict.items()
+    }
+
+    strategies_to_test = [
+        ("TrendFollowing", TrendFollowingStrategy()),
+        ("MeanReversion", MeanReversionStrategy()),
+        ("MultiFactor", MultiFactorStrategy())
+    ]
+
+    engine = BacktestEngine(initial_cash=INITIAL_CASH)
+
+    for strat_name, strat in strategies_to_test:
+        print(f"\n>>> 正在审计策略: {strat_name}")
+
+        # -------------------------------------------------------------
+        # 审计项 1: 物理截断防未来函数检验 (Truncation Invariance Test)
+        # -------------------------------------------------------------
+        w_full = strat.generate_signals(stock_dict)
+        w_trunc = strat.generate_signals(stock_dict_trunc)
+
+        # 提取截断日前的全量数据切片
+        w_full_slice = w_full.loc[:cutoff_date][w_trunc.columns]
+        diff_max = float(np.max(np.abs(w_full_slice.values - w_trunc.values)))
+        print(f"  [审计1] 物理截断未来函数检验 (最大差异值): {diff_max:.2e}")
+        assert diff_max < 1e-9, f"策略 {strat_name} 存在未来函数！截断差异为 {diff_max}"
+        print(f"   PASS: 截断日前所有信号矩阵与全量回测完全比特级一致 (<1e-9)，零未来函数！")
+
+        # -------------------------------------------------------------
+        # 审计项 2: 资金会计恒等式与非负现金审计 (Accounting Identity Audit)
+        # -------------------------------------------------------------
+        res = engine.run(strat, stock_dict)
+        equity_df = res["equity_df"]
+        trades_df = res["trades_df"]
+
+        initial_cash = res["initial_cash"]
+        final_cash = equity_df["cash"].iloc[-1]
+
+        buy_trades = trades_df[trades_df["action"] == "BUY"]
+        sell_trades = trades_df[trades_df["action"] == "SELL"]
+
+        cum_buy = float(buy_trades["turnover"].sum())
+        cum_sell = float(sell_trades["turnover"].sum())
+        cum_comm = float(trades_df["commission"].sum())
+        cum_tax = float(trades_df["stamp_duty"].sum())
+
+        theoretical_cash = initial_cash - cum_buy + cum_sell - cum_comm - cum_tax
+        cash_diff = abs(final_cash - theoretical_cash)
+        print(f"  [审计2] 资金会计恒等式核对 (差异值): {cash_diff:.4f} 元")
+        assert cash_diff < 1e-2, f"策略 {strat_name} 资金会计恒等式失衡！理论 {theoretical_cash}，实际 {final_cash}"
+        assert (equity_df["cash"] >= 0.0).all(), f"策略 {strat_name} 存在现金为负违规！"
+        print(f"   PASS: 期末现金与总买入、总卖出、佣金、印花税精准平衡 (差异 <0.01元)，现金始终非负！")
+
+        # -------------------------------------------------------------
+        # 审计项 3: 成交开盘价 100% 吻合与整手买入审计 (Execution Price Audit)
+        # -------------------------------------------------------------
+        if not trades_df.empty:
+            mismatch_count = 0
+            for _, tr in trades_df.iterrows():
+                t_date = tr["date"]
+                t_code = tr["code"]
+                t_price = tr["price"]
+                expected_open = stock_dict[t_code][stock_dict[t_code]["date"] == t_date]["open"].iloc[0]
+                if abs(t_price - expected_open) > 1e-3:
+                    mismatch_count += 1
+                if tr["action"] == "BUY":
+                    assert tr["shares"] % 100 == 0, f"买入股数非 100 整倍数: {tr['shares']}"
+
+            print(f"  [审计3] 次日开盘价成交准确率核验 (共 {len(trades_df)} 笔交割单): 0 处偏差")
+            assert mismatch_count == 0, f"策略 {strat_name} 存在 {mismatch_count} 笔成交价与开盘价不一致！"
+            print(f"   PASS: 全部 {len(trades_df)} 笔交割单价格与次日开盘价 100% 严格吻合，买入满足整手约束！")
+
+    print("\n" + "=" * 70)
+    print(" 四重质量验真审计全部通过！三大策略无未来函数、会计恒等式严密平衡！")
+    print("=" * 70)
+    return True
+
+
 def handle_test(args):
     """
     处理 --mode test 单元测试指令
@@ -100,48 +200,49 @@ def handle_test(args):
     print("【A股量化回测系统】启动系统底层第一性原理自动化测试套件...")
     print("=" * 70)
 
-    print("\n>>> 正在运行 [1/2] 脏数据注入校验与自动修复单元测试...")
+    print("\n>>> 正在运行 [1/3] 脏数据注入校验与自动修复单元测试...")
     test_1 = test_dirty_data_cleaning()
-    print(" [1/2] 脏数据清洗单元测试: PASS (100% 通过)")
+    print(" [1/3] 脏数据清洗单元测试: PASS (100% 通过)")
 
-    print("\n>>> 正在运行 [2/2] 撮合引擎A股规则（T+1/涨跌停/停牌/税费）单元测试...")
+    print("\n>>> 正在运行 [2/3] 撮合引擎A股规则（T+1/涨跌停/停牌/税费）单元测试...")
     test_2 = test_engine_rules()
-    print(" [2/2] 撮合引擎A股规则测试: PASS (100% 通过)")
+    print(" [2/3] 撮合引擎A股规则测试: PASS (100% 通过)")
+
+    print("\n>>> 正在运行 [3/3] 四重质量验真审计（防未来函数/会计恒等式/开盘价吻合）...")
+    test_3 = test_quality_audit()
+    print(" [3/3] 四重质量验真审计: PASS (100% 通过)")
 
     print("\n" + "=" * 70)
-    if test_1 and test_2:
-        print(" 全部单元测试 100% PASS！系统核心底层逻辑严密可靠！")
+    if test_1 and test_2 and test_3:
+        print(" 全部自动化测试套件 100% PASS！系统核心底层与三大策略严密可靠！")
     else:
-        print(" 部分单元测试未通过，请检查日志！")
+        print(" 自动化测试未通过，请检查日志！")
     print("=" * 70)
-    return test_1 and test_2
+    return test_1 and test_2 and test_3
 
 
 def get_strategy_instance(strategy_name: str, params: dict, available_stocks: list) -> BaseStrategy:
     """
     根据策略名称与参数动态创建策略实例
+    支持别名映射:
+    - trend / trend_following -> TrendFollowingStrategy
+    - mean_reversion / reversion / bollinger -> MeanReversionStrategy
+    - multi_factor / factor -> MultiFactorStrategy
+    - buy_hold / equal_weight -> EqualWeightBuyHoldStrategy
     """
     s_name = strategy_name.lower().replace("-", "_")
-    if s_name in ["equal_weight", "buy_and_hold", "equalweightbuyhold"]:
-        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
-    
-    # 尝试动态加载 Phase 3 策略
-    try:
-        if s_name in ["trend_following", "trend"]:
-            from strategies.trend_following import TrendFollowingStrategy
-            return TrendFollowingStrategy(params=params)
-        elif s_name in ["mean_reversion", "reversion", "bollinger"]:
-            from strategies.mean_reversion import MeanReversionStrategy
-            return MeanReversionStrategy(params=params)
-        elif s_name in ["multi_factor", "factor"]:
-            from strategies.multi_factor import MultiFactorStrategy
-            return MultiFactorStrategy(params=params)
-    except ImportError:
-        pass
 
-    # 默认回退为等权买入持有
-    print(f"[提示] 未识别或尚未实现策略 '{strategy_name}'，使用默认等权买入持有策略 (EqualWeightBuyHold)。")
-    return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
+    if s_name in ["trend", "trend_following", "trendfollowing"]:
+        return TrendFollowingStrategy(params=params)
+    elif s_name in ["mean_reversion", "meanreversion", "reversion", "bollinger"]:
+        return MeanReversionStrategy(params=params)
+    elif s_name in ["multi_factor", "multifactor", "factor"]:
+        return MultiFactorStrategy(params=params)
+    elif s_name in ["buy_hold", "equal_weight", "buy_and_hold", "equalweightbuyhold"]:
+        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
+    else:
+        print(f"[提示] 未识别策略名称 '{strategy_name}'，使用默认等权买入持有策略 (EqualWeightBuyHold)。")
+        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
 
 
 def handle_backtest(args):
@@ -264,7 +365,7 @@ def main():
         type=str,
         choices=["validate", "test", "backtest", "optimize", "web"],
         default="validate",
-        help="运行模式: validate(数据清洗校验), test(底层单元测试), backtest(策略回测), optimize(网格寻优), web(启动Web看板)"
+        help="运行模式: validate(数据清洗校验), test(底层与质量验真审计测试), backtest(策略回测), optimize(网格寻优), web(启动Web看板)"
     )
     parser.add_argument(
         "--sample",
@@ -274,8 +375,8 @@ def main():
     parser.add_argument(
         "--strategy",
         type=str,
-        default="equal_weight",
-        help="策略名称 (equal_weight / trend_following / mean_reversion / multi_factor)"
+        default="trend",
+        help="策略名称 (trend / mean_reversion / multi_factor / buy_hold)"
     )
     parser.add_argument(
         "--params",

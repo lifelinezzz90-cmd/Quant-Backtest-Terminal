@@ -97,15 +97,18 @@ class BacktestEngine:
         self.lot_size = lot_size
 
     def _calc_buy_cost(self, turnover: float) -> Tuple[float, float]:
-        """计算买入佣金与总支出: (佣金, 总支出)"""
-        comm = max(turnover * self.commission_rate, self.min_commission)
-        return comm, turnover + comm
+        """计算买入佣金与总支出: (佣金, 总支出)，精确至分(两位小数)"""
+        turnover_clean = round(turnover, 2)
+        comm = round(max(turnover_clean * self.commission_rate, self.min_commission), 2)
+        total_exp = round(turnover_clean + comm, 2)
+        return comm, total_exp
 
     def _calc_sell_proceeds(self, turnover: float) -> Tuple[float, float, float]:
-        """计算卖出佣金、印花税与净收益: (佣金, 印花税, 净到账)"""
-        comm = max(turnover * self.commission_rate, self.min_commission)
-        tax = turnover * self.stamp_duty_rate
-        proceeds = turnover - comm - tax
+        """计算卖出佣金、印花税与净收益: (佣金, 印花税, 净到账)，精确至分(两位小数)"""
+        turnover_clean = round(turnover, 2)
+        comm = round(max(turnover_clean * self.commission_rate, self.min_commission), 2)
+        tax = round(turnover_clean * self.stamp_duty_rate, 2)
+        proceeds = round(turnover_clean - comm - tax, 2)
         return comm, tax, proceeds
 
     def run(
@@ -279,12 +282,12 @@ class BacktestEngine:
                     if actual_sell_shares <= 0:
                         continue
 
-                    turnover = actual_sell_shares * open_p
+                    turnover = round(actual_sell_shares * open_p, 2)
                     comm, tax, proceeds = self._calc_sell_proceeds(turnover)
-                    cash += proceeds
+                    cash = round(cash + proceeds, 2)
 
                     # 结算平仓实现盈亏
-                    realized_pnl = proceeds - (actual_sell_shares * pos["avg_cost"])
+                    realized_pnl = round(proceeds - (actual_sell_shares * pos["avg_cost"]), 2)
 
                     # 更新持仓
                     pos["total_shares"] -= actual_sell_shares
@@ -350,9 +353,9 @@ class BacktestEngine:
                     if shares_to_buy < self.lot_size:
                         continue
 
-                    turnover = shares_to_buy * open_p
+                    turnover = round(shares_to_buy * open_p, 2)
                     comm, total_exp = self._calc_buy_cost(turnover)
-                    cash -= total_exp
+                    cash = round(cash - total_exp, 2)
 
                     # 更新平均成本与持仓股数（T+1: 当日买入不计入当日 sellable_shares）
                     old_shares = pos["total_shares"]
