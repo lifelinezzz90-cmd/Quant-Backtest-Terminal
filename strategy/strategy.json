@@ -1,0 +1,90 @@
+{
+  "best_overall": {
+    "strategy_type": "TrendFollowing",
+    "strategy_name": "TF_5_40_5",
+    "params": {
+      "short_window": 5,
+      "long_window": 40,
+      "rebalance_days": 5,
+      "max_positions": 8
+    },
+    "oos_annual_return": 0.1724,
+    "oos_sharpe": 0.9546,
+    "oos_max_drawdown": 0.1189,
+    "oos_calmar": 1.4498,
+    "oos_3fold_pass": true,
+    "is_annual_return": 0.1253,
+    "is_sharpe": 0.537,
+    "full_annual_return": 0.1387,
+    "full_sharpe": 0.6249,
+    "full_max_drawdown": 0.2855,
+    "full_calmar": 0.486,
+    "full_win_rate": 0.5824,
+    "trade_count": 1048
+  },
+  "category_bests": {
+    "TrendFollowing": {
+      "experiment_id": "OPT_003_TrendFollowing",
+      "strategy_name": "TF_5_40_5",
+      "params": {
+        "short_window": 5,
+        "long_window": 40,
+        "rebalance_days": 5,
+        "max_positions": 8
+      },
+      "oos_annual_return": 0.1724,
+      "oos_sharpe": 0.9546,
+      "oos_max_drawdown": 0.1189,
+      "oos_3fold_pass": true,
+      "full_annual_return": 0.1387,
+      "full_sharpe": 0.6249,
+      "full_max_drawdown": 0.2855
+    },
+    "MeanReversion": {
+      "experiment_id": "OPT_029_MeanReversion",
+      "strategy_name": "MR_15_1.8_0.0",
+      "params": {
+        "window": 15,
+        "num_std": 1.8,
+        "exit_z": 0.0,
+        "max_positions": 8
+      },
+      "oos_annual_return": 0.0025,
+      "oos_sharpe": -0.2195,
+      "oos_max_drawdown": 0.0901,
+      "oos_3fold_pass": true,
+      "full_annual_return": 0.0314,
+      "full_sharpe": 0.1718,
+      "full_max_drawdown": 0.1215
+    },
+    "MultiFactor": {
+      "experiment_id": "OPT_052_MultiFactor",
+      "strategy_name": "MF_20_M6V2S2",
+      "params": {
+        "lookback_days": 20,
+        "momentum_weight": 0.6,
+        "volatility_weight": 0.2,
+        "sentiment_weight": 0.2,
+        "rebalance_days": 5,
+        "top_n": 8
+      },
+      "oos_annual_return": 0.0283,
+      "oos_sharpe": 0.126,
+      "oos_max_drawdown": 0.1763,
+      "oos_3fold_pass": false,
+      "full_annual_return": 0.0995,
+      "full_sharpe": 0.5243,
+      "full_max_drawdown": 0.3691
+    }
+  },
+  "benchmark_summary": {
+    "fold1": -0.4326,
+    "fold2": -0.6269,
+    "fold3": 0.5104,
+    "oos": 0.0119,
+    "is": 0.3411,
+    "full": 0.2445
+  },
+  "total_evaluated_combinations": 68,
+  "generated_at": "2026-10-20 00:01:10"
+}

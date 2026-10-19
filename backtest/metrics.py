@@ -107,6 +107,7 @@ def calculate_metrics(
         bm_annual_return = 0.0
 
     excess_annual_return = annual_return - bm_annual_return
+    calmar_ratio = round(float(annual_return / max_drawdown), 4) if max_drawdown > 1e-6 else 0.0
 
     return {
         "start_date": start_d,
@@ -116,6 +117,7 @@ def calculate_metrics(
         "annual_return": round(float(annual_return), 4),
         "max_drawdown": round(float(max_drawdown), 4),
         "sharpe_ratio": round(float(sharpe_ratio), 4),
+        "calmar_ratio": calmar_ratio,
         "win_rate": round(float(win_rate), 4),
         "trade_count": int(trade_count),
         "benchmark_total_return": round(float(bm_total_ret), 4),
@@ -129,10 +131,12 @@ def plot_equity_curve(
     benchmark_df: pd.DataFrame,
     title: str = "策略净值 vs 沪深300对比图",
     save_path: Optional[Path] = None,
-    metrics: Optional[Dict[str, Any]] = None
+    metrics: Optional[Dict[str, Any]] = None,
+    split_date: Optional[str] = None
 ) -> Optional[Path]:
     """
     绘制策略净值曲线 vs 沪深300基准曲线以及水下回撤图（双子图）
+    支持 split_date 样本内/样本外分界标记
     """
     selected_font = setup_matplotlib_font()
 
@@ -169,6 +173,16 @@ def plot_equity_curve(
     ax1.plot(dates, merged["nav"], label="策略净值", color="#D32F2F", linewidth=1.8)
     ax1.plot(dates, merged["bm_nav"], label="沪深300基准", color="#1976D2", linewidth=1.4, linestyle="--")
     ax1.axhline(1.0, color="gray", linestyle=":", alpha=0.6)
+
+    # 样本内外切分竖线
+    if split_date:
+        split_dt = pd.to_datetime(split_date)
+        if dates.min() <= split_dt <= dates.max():
+            ax1.axvline(split_dt, color="#FF9800", linestyle="--", linewidth=1.5, label=f"样本内/外分界 ({split_date})")
+            ax2.axvline(split_dt, color="#FF9800", linestyle="--", linewidth=1.5)
+            y_top = max(merged["nav"].max(), merged["bm_nav"].max()) * 0.96
+            ax1.text(split_dt, y_top, "  ← 样本内 (IS) | 样本外 (OOS) →", fontsize=10, color="#E65100", fontweight="bold")
+
     ax1.set_ylabel("累计净值 (NAV)", fontsize=11)
     ax1.set_title(title, fontsize=14, fontweight="bold", pad=12)
     ax1.grid(True, linestyle="--", alpha=0.4)
@@ -180,6 +194,7 @@ def plot_equity_curve(
             f"年化收益: {metrics.get('annual_return', 0)*100:.2f}%\n"
             f"最大回撤: {metrics.get('max_drawdown', 0)*100:.2f}%\n"
             f"夏普比率: {metrics.get('sharpe_ratio', 0):.2f}\n"
+            f"卡玛比率: {metrics.get('calmar_ratio', 0):.2f}\n"
             f"交易胜率: {metrics.get('win_rate', 0)*100:.1f}%\n"
             f"超额年化: {metrics.get('excess_annual_return', 0)*100:.2f}%"
         )

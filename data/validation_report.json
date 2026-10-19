@@ -19,8 +19,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 0,
-      "dividend_jump_details": [],
       "name": "贵州茅台"
     },
     "601318": {
@@ -32,33 +30,8 @@
       "nan_repaired_count": 0,
       "price_negative_count": 0,
       "inversion_repaired_count": 0,
-      "spike_repaired_count": 1,
-      "spike_details": [
-        {
-          "date": "2019-02-25",
-          "original_close": 54.312,
-          "repaired_close": 49.827,
-          "return_pct": "12.37%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        }
-      ],
-      "dividend_jump_count": 2,
-      "dividend_jump_details": [
-        {
-          "date": "2023-04-27",
-          "prev_close": 35.701,
-          "curr_close": 40.281,
-          "return_pct": "12.83%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2024-09-30",
-          "prev_close": 45.694,
-          "curr_close": 50.884,
-          "return_pct": "11.36%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
+      "spike_repaired_count": 0,
+      "spike_details": [],
       "name": "中国平安"
     },
     "601398": {
@@ -72,16 +45,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 1,
-      "dividend_jump_details": [
-        {
-          "date": "2020-07-06",
-          "prev_close": 3.373,
-          "curr_close": 3.813,
-          "return_pct": "13.04%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
       "name": "工商银行"
     },
     "600900": {
@@ -95,8 +58,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 0,
-      "dividend_jump_details": [],
       "name": "长江电力"
     },
     "000002": {
@@ -110,16 +71,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 1,
-      "dividend_jump_details": [
-        {
-          "date": "2021-02-25",
-          "prev_close": 27.096,
-          "curr_close": 30.096,
-          "return_pct": "11.07%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
       "name": "万科A"
     },
     "600276": {
@@ -133,8 +84,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 0,
-      "dividend_jump_details": [],
       "name": "恒瑞医药"
     },
     "002415": {
@@ -146,47 +95,8 @@
       "nan_repaired_count": 8,
       "price_negative_count": 0,
       "inversion_repaired_count": 0,
-      "spike_repaired_count": 2,
-      "spike_details": [
-        {
-          "date": "2019-05-13",
-          "original_close": 20.284,
-          "repaired_close": 21.914,
-          "return_pct": "-11.05%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        },
-        {
-          "date": "2020-02-03",
-          "original_close": 26.074,
-          "repaired_close": 28.694,
-          "return_pct": "-11.92%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        }
-      ],
-      "dividend_jump_count": 3,
-      "dividend_jump_details": [
-        {
-          "date": "2020-07-27",
-          "prev_close": 27.934,
-          "curr_close": 31.294,
-          "return_pct": "12.03%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2021-01-05",
-          "prev_close": 44.104,
-          "curr_close": 49.084,
-          "return_pct": "11.29%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2022-05-05",
-          "prev_close": 37.594,
-          "curr_close": 33.344,
-          "return_pct": "-11.30%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
+      "spike_repaired_count": 0,
+      "spike_details": [],
       "name": "海康威视"
     },
     "002594": {
@@ -198,68 +108,8 @@
       "nan_repaired_count": 0,
       "price_negative_count": 0,
       "inversion_repaired_count": 0,
-      "spike_repaired_count": 3,
-      "spike_details": [
-        {
-          "date": "2019-04-17",
-          "original_close": 17.532,
-          "repaired_close": 16.074,
-          "return_pct": "12.08%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        },
-        {
-          "date": "2020-02-03",
-          "original_close": 14.75,
-          "repaired_close": 16.164,
-          "return_pct": "-11.90%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        },
-        {
-          "date": "2020-07-13",
-          "original_close": 29.433,
-          "repaired_close": 27.724,
-          "return_pct": "11.21%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        }
-      ],
-      "dividend_jump_count": 5,
-      "dividend_jump_details": [
-        {
-          "date": "2020-01-13",
-          "prev_close": 12.44,
-          "curr_close": 14.003,
-          "return_pct": "12.56%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2020-02-20",
-          "prev_close": 17.436,
-          "curr_close": 19.5,
-          "return_pct": "11.84%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2020-07-03",
-          "prev_close": 20.846,
-          "curr_close": 23.25,
-          "return_pct": "11.53%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2020-07-16",
-          "prev_close": 28.3,
-          "curr_close": 25.15,
-          "return_pct": "-11.13%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2020-09-01",
-          "prev_close": 25.153,
-          "curr_close": 27.986,
-          "return_pct": "11.26%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
+      "spike_repaired_count": 0,
+      "spike_details": [],
       "name": "比亚迪"
     },
     "600111": {
@@ -271,33 +121,8 @@
       "nan_repaired_count": 0,
       "price_negative_count": 0,
       "inversion_repaired_count": 0,
-      "spike_repaired_count": 1,
-      "spike_details": [
-        {
-          "date": "2019-05-16",
-          "original_close": 10.242,
-          "repaired_close": 9.622,
-          "return_pct": "11.06%",
-          "reason": "单日极端跳空毛刺，次日已回归，用前后日均值修复"
-        }
-      ],
-      "dividend_jump_count": 2,
-      "dividend_jump_details": [
-        {
-          "date": "2019-02-25",
-          "prev_close": 8.412,
-          "curr_close": 9.352,
-          "return_pct": "11.17%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        },
-        {
-          "date": "2020-07-08",
-          "prev_close": 9.532,
-          "curr_close": 10.582,
-          "return_pct": "11.02%",
-          "reason": "疑似未复权缺口或复权因子跳变"
-        }
-      ],
+      "spike_repaired_count": 0,
+      "spike_details": [],
       "name": "北方稀土"
     },
     "601888": {
@@ -311,8 +136,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 0,
-      "dividend_jump_details": [],
       "name": "中国中免"
     },
     "000300": {
@@ -326,8 +149,6 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
-      "dividend_jump_count": 0,
-      "dividend_jump_details": [],
       "name": "沪深300基准"
     }
   }

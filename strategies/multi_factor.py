@@ -48,27 +48,48 @@ class MultiFactorStrategy(BaseStrategy):
 
     def __init__(
         self,
+        lookback_days: Optional[int] = None,
         mom_window: int = 20,
         vol_window: int = 20,
         rev_window: int = 5,
-        top_k: int = 6,
+        momentum_weight: float = 1.0,
+        volatility_weight: float = 1.0,
+        sentiment_weight: float = 0.5,
+        top_k: int = 8,
+        top_n: Optional[int] = None,
         rebalance_days: int = 10,
         use_sentiment: bool = True,
         name: str = "MultiFactor",
-        params: Optional[Dict[str, Any]] = None
+        params: Optional[Dict[str, Any]] = None,
+        **kwargs
     ):
+        actual_top = top_n if top_n is not None else top_k
+        actual_mom = lookback_days if lookback_days is not None else mom_window
+        actual_vol = lookback_days if lookback_days is not None else vol_window
+
         p = {
-            "mom_window": int(params.get("mom_window", mom_window)) if params else mom_window,
-            "vol_window": int(params.get("vol_window", vol_window)) if params else vol_window,
+            "mom_window": int(params.get("mom_window", actual_mom)) if params else actual_mom,
+            "vol_window": int(params.get("vol_window", actual_vol)) if params else actual_vol,
             "rev_window": int(params.get("rev_window", rev_window)) if params else rev_window,
-            "top_k": int(params.get("top_k", top_k)) if params else top_k,
+            "momentum_weight": float(params.get("momentum_weight", momentum_weight)) if params else momentum_weight,
+            "volatility_weight": float(params.get("volatility_weight", volatility_weight)) if params else volatility_weight,
+            "sentiment_weight": float(params.get("sentiment_weight", sentiment_weight)) if params else sentiment_weight,
+            "top_k": int(params.get("top_k", actual_top)) if params else actual_top,
             "rebalance_days": int(params.get("rebalance_days", rebalance_days)) if params else rebalance_days,
             "use_sentiment": bool(params.get("use_sentiment", use_sentiment)) if params else use_sentiment,
         }
+        if lookback_days is not None:
+            p["lookback_days"] = lookback_days
+        if top_n is not None:
+            p["top_n"] = top_n
+
         super().__init__(name=name, params=p)
         self.mom_window = p["mom_window"]
         self.vol_window = p["vol_window"]
         self.rev_window = p["rev_window"]
+        self.momentum_weight = p["momentum_weight"]
+        self.volatility_weight = p["volatility_weight"]
+        self.sentiment_weight = p["sentiment_weight"]
         self.top_k = p["top_k"]
         self.rebalance_days = p["rebalance_days"]
         self.use_sentiment = p["use_sentiment"]
@@ -141,11 +162,15 @@ class MultiFactorStrategy(BaseStrategy):
                 z_vol = _zscore_cross_sectional(vol_raw[t, :])
                 z_rev = _zscore_cross_sectional(rev_raw[t, :])
 
-                composite_score = z_mom + z_vol + z_rev
+                composite_score = (
+                    self.momentum_weight * z_mom +
+                    self.volatility_weight * z_vol +
+                    0.5 * z_rev
+                )
 
-                if sent_raw is not None and t < len(sent_raw):
+                if sent_raw is not None and t < len(sent_raw) and self.sentiment_weight > 0:
                     z_sent = _zscore_cross_sectional(sent_raw[t, :])
-                    composite_score += 0.5 * z_sent  # 舆情因子权重
+                    composite_score += self.sentiment_weight * z_sent
 
                 # 排除缺失因子数据的标的 (如处于预热期)
                 has_factor = ~(np.isnan(mom_raw[t, :]) | np.isnan(vol_raw[t, :]))

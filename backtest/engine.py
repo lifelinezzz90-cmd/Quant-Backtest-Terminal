@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 from backtest.config import (
+    DATA_DIR,
     CLEANED_DATA_DIR,
     SAMPLE_DATA_DIR,
     INITIAL_CASH,
@@ -41,22 +42,36 @@ logger = logging.getLogger("BacktestEngine")
 def load_cleaned_data(sample: bool = False,
                       data_dir: Optional[Path] = None) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
     """
-    加载清洗后的标准行情数据与沪深300基准数据
-    返回:
-        stock_dict: {code: DataFrame}
-        benchmark_df: DataFrame
+    加载行情数据与基准数据
+    优先策略：
+    - 若指定 data_dir，则使用该目录
+    - 若 sample=True，优先使用 DATA_DIR / "sample" 或 CLEANED_DATA_DIR / "sample"
+    - 若 sample=False，优先使用 DATA_DIR（若包含 000300.csv 及标的 CSV）以对齐主办方 6 列规范，否则回退使用 CLEANED_DATA_DIR
+    - 兼容读取 6 列标准 CSV (date, open, high, low, close, volume)，在内存中动态衍生计算：
+      is_suspended = (volume <= 0.0) | volume.isna()
+      prev_close = close.shift(1).bfill()
+      up_limit = (prev_close * 1.10).round(2)
+      down_limit = (prev_close * 0.90).round(2)
+      amount = (close * volume).round(2)
     """
-    if data_dir is None:
-        target_dir = CLEANED_DATA_DIR / "sample" if sample else CLEANED_DATA_DIR
-        # 若 sample 目录下为空则尝试主 cleaned 目录
-        if not target_dir.exists() or len(list(target_dir.glob("*.csv"))) == 0:
-            target_dir = CLEANED_DATA_DIR
-    else:
+    if data_dir is not None:
         target_dir = data_dir
+    elif sample:
+        target_dir = DATA_DIR / "sample" if (DATA_DIR / "sample").exists() and len(list((DATA_DIR / "sample").glob("*.csv"))) > 0 else CLEANED_DATA_DIR / "sample"
+    else:
+        # 优先读取根目录 data/*.csv (主办方官方 6 列规范)
+        if (DATA_DIR / f"{BENCHMARK_CODE}.csv").exists():
+            target_dir = DATA_DIR
+        else:
+            target_dir = CLEANED_DATA_DIR
 
-    csv_files = list(target_dir.glob("*.csv"))
+    # 过滤掉非行情的辅助报告 CSV（如 validation 报告、对比结果等）
+    csv_files = [
+        f for f in target_dir.glob("*.csv")
+        if not f.name.startswith("validation_") and "sentiment" not in f.name and "对比结果" not in f.name
+    ]
     if not csv_files:
-        raise FileNotFoundError(f"目录 {target_dir} 下未找到已清洗的行情 CSV 文件，请先运行数据清洗！")
+        raise FileNotFoundError(f"目录 {target_dir} 下未找到行情 CSV 文件，请先运行数据清洗！")
 
     stock_dict: Dict[str, pd.DataFrame] = {}
     benchmark_df: Optional[pd.DataFrame] = None
@@ -66,6 +81,24 @@ def load_cleaned_data(sample: bool = False,
         df = pd.read_csv(f, dtype={"date": str})
         df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
         df = df.sort_values("date").reset_index(drop=True)
+
+        for col in ["open", "high", "low", "close", "volume"]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        if "amount" not in df.columns:
+            df["amount"] = (df["close"] * df["volume"]).round(2)
+
+        if "is_suspended" not in df.columns:
+            df["is_suspended"] = (df["volume"] <= 0.0) | df["volume"].isna()
+        else:
+            df["is_suspended"] = df["is_suspended"].astype(bool)
+
+        if "up_limit" not in df.columns or "down_limit" not in df.columns:
+            prev_close = df["close"].shift(1).bfill()
+            df["up_limit"] = (prev_close * 1.10).round(2)
+            df["down_limit"] = (prev_close * 0.90).round(2)
+
         if code == BENCHMARK_CODE:
             benchmark_df = df
         else:
@@ -184,6 +217,8 @@ class BacktestEngine:
 
         # 记录上一交易日的目标权重字典，避免无权变动时的碎单调仓
         prev_target_weights: Dict[str, float] = {c: 0.0 for c in data_dict.keys()}
+        # 挂单状态机：记录因涨跌停/停牌未成交的调仓挂单，在次日或后续交易日自动补单
+        pending_rebalance: Dict[str, bool] = {c: False for c in data_dict.keys()}
 
         # 5. 逐日截面事件驱动撮合循环
         # 注意时序：在交易日 t 撮合时，执行的是交易日 t-1 收盘生成的信号
@@ -222,10 +257,11 @@ class BacktestEngine:
                     prev_w = float(prev_target_weights.get(code, 0.0))
                     curr_shares = positions[code]["total_shares"]
                     open_price = current_bar[code]["open"]
+                    is_pending = pending_rebalance.get(code, False)
 
-                    # 防碎单抖动：仅在目标权重实质变化、或建仓/清仓时才执行调仓
+                    # 防碎单抖动：在目标权重实质变化、建仓/清仓、或存在被拒单未完成挂单(is_pending)时执行调仓
                     w_diff = target_w - prev_w
-                    if abs(w_diff) < 1e-4 and not (target_w == 0.0 and curr_shares > 0) and not (target_w > 0.0 and curr_shares == 0):
+                    if abs(w_diff) < 1e-4 and not (target_w == 0.0 and curr_shares > 0) and not (target_w > 0.0 and curr_shares == 0) and not is_pending:
                         continue
 
                     target_alloc_val = estimated_total_assets * target_w
@@ -252,6 +288,7 @@ class BacktestEngine:
 
                     # 停牌拦截
                     if bar["is_suspended"] or bar["volume"] <= 0:
+                        pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "SELL",
                             "price": open_p, "reason": "SUSPENDED", "requested_shares": req_shares
@@ -260,6 +297,7 @@ class BacktestEngine:
 
                     # 跌停拦截：开盘一字跌停或低于跌停价，无法卖出
                     if open_p <= down_l:
+                        pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "SELL",
                             "price": open_p, "reason": "LIMIT_DOWN_REJECT", "requested_shares": req_shares
@@ -269,6 +307,7 @@ class BacktestEngine:
                     # T+1 可卖股数限制
                     actual_sell_shares = min(req_shares, pos["sellable_shares"])
                     if actual_sell_shares <= 0:
+                        pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "SELL",
                             "price": open_p, "reason": "T_PLUS_1_LOCKED", "requested_shares": req_shares
@@ -295,6 +334,7 @@ class BacktestEngine:
                     if pos["total_shares"] == 0:
                         pos["avg_cost"] = 0.0
 
+                    pending_rebalance[code] = False
                     prev_target_weights[code] = target_w
 
                     trades_list.append({
@@ -320,6 +360,7 @@ class BacktestEngine:
 
                     # 停牌拦截
                     if bar["is_suspended"] or bar["volume"] <= 0:
+                        pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "BUY",
                             "price": open_p, "reason": "SUSPENDED", "requested_shares": 0
@@ -328,6 +369,7 @@ class BacktestEngine:
 
                     # 涨停拦截：开盘一字涨停或达到涨停价，无法买入
                     if open_p >= up_l:
+                        pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "BUY",
                             "price": open_p, "reason": "LIMIT_UP_REJECT", "requested_shares": 0
@@ -365,6 +407,7 @@ class BacktestEngine:
                     pos["total_shares"] = new_shares
                     pos["last_buy_date"] = current_date
 
+                    pending_rebalance[code] = False
                     prev_target_weights[code] = target_w
 
                     trades_list.append({
@@ -512,6 +555,27 @@ def test_engine_rules() -> bool:
     # 6. 验证全程现金无负值
     assert (equity_df["cash"] >= 0.0).all(), "账户现金出现负值违规！"
     logger.info(" [断言6通过] 账户现金始终保持非负安全底线。")
+
+    # 7. 验证挂单状态机与自动补单机制 (Pending Rebalance Retry)
+    retry_dates = ["2024-01-02", "2024-01-03", "2024-01-04"]
+    retry_bars = [
+        {"date": "2024-01-02", "open": 10.0, "high": 10.0, "low": 10.0, "close": 10.0, "volume": 1000, "is_suspended": False, "up_limit": 11.0, "down_limit": 9.0},
+        {"date": "2024-01-03", "open": 11.0, "high": 11.0, "low": 11.0, "close": 11.0, "volume": 1000, "is_suspended": False, "up_limit": 11.0, "down_limit": 9.0},  # 一字涨停拒买
+        {"date": "2024-01-04", "open": 10.5, "high": 10.8, "low": 10.2, "close": 10.6, "volume": 1000, "is_suspended": False, "up_limit": 12.1, "down_limit": 9.9},  # 次日恢复正常开盘
+    ]
+
+    class PendingRetryStrategy(BaseStrategy):
+        def generate_signals(self, d_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+            return pd.DataFrame({"RETRY": [1.0, 1.0, 1.0]}, index=retry_dates)
+
+    retry_engine = BacktestEngine(initial_cash=100_000.0)
+    retry_res = retry_engine.run(PendingRetryStrategy("RetryMock"), {"RETRY": pd.DataFrame(retry_bars)})
+    retry_trades = retry_res["trades_df"]
+    retry_rejects = retry_res["rejects_df"]
+
+    assert len(retry_rejects[(retry_rejects["date"] == "2024-01-03") & (retry_rejects["reason"] == "LIMIT_UP_REJECT")]) == 1, "Day 1 涨停未被拒单！"
+    assert len(retry_trades[(retry_trades["date"] == "2024-01-04") & (retry_trades["action"] == "BUY")]) == 1, "Day 2 挂单状态机未能自动补单成交！"
+    logger.info(" [断言7通过] 挂单状态机自动补单机制核验无误 (LIMIT_UP_REJECT -> 次日自动补单成交)。")
 
     logger.info("=== 撮合引擎核心规则单元测试全部断言 100% 通过！===")
     return True

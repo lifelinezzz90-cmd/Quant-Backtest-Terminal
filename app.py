@@ -62,6 +62,7 @@ from strategies import (
     MeanReversionStrategy,
     MultiFactorStrategy
 )
+from backtest.optimizer import GridOptimizer
 
 
 def handle_validate(args):
@@ -355,6 +356,45 @@ def handle_backtest(args):
     return res, metrics
 
 
+def handle_optimize(args):
+    """
+    处理 --mode optimize 68组网格寻优与样本外三折滚动验证指令
+    """
+    print("=" * 80)
+    print("【A股量化回测系统】启动 68 组参数网格寻优与样本外三折滚动验证流水线...")
+    print("=" * 80)
+
+    # 1. 加载全量标准行情数据
+    stock_dict, benchmark_df = load_cleaned_data(sample=args.sample)
+    print(f" 数据加载完成: {len(stock_dict)} 只股票标的，沪深300基准已对齐。")
+
+    # 2. 运行网格寻优器
+    optimizer = GridOptimizer(stock_dict, benchmark_df)
+    df_results, summary_data = optimizer.run_all()
+
+    # 3. 导出对比结果 CSV、策略 JSON 与高清净值图
+    csv_path, json_path, img_path = optimizer.export_artifacts(df_results, summary_data)
+
+    best_cfg = summary_data["best_overall"]
+    print("\n" + "=" * 80)
+    print(" 68 组参数网格寻优与三折滚动检验全部完成！")
+    print("=" * 80)
+    print(f" 评选全局最优策略: [{best_cfg['strategy_type']}] {best_cfg['strategy_name']}")
+    print(f"   * 样本外 (OOS 2023-2024) 年化收益: {best_cfg['oos_annual_return']*100:.2f}% | 夏普: {best_cfg['oos_sharpe']:.2f} | 回撤: {best_cfg['oos_max_drawdown']*100:.2f}%")
+    print(f"   * 样本外三折滚动检验 (3-Fold): {'100% 全部通过 (PASS)' if best_cfg['oos_3fold_pass'] else '部分未通过'}")
+    print(f"   * 全周期 (2019-2024) 年化收益: {best_cfg['full_annual_return']*100:.2f}% | 夏普: {best_cfg['full_sharpe']:.2f} | 回撤: {best_cfg['full_max_drawdown']*100:.2f}%")
+    print(f"   * 策略最优核心参数: {best_cfg['params']}")
+    print("-" * 80)
+    print(" 各流派最优策略代表：")
+    for st, cat in summary_data["category_bests"].items():
+        print(f"   - [{st:15s}]: OOS夏普 {cat['oos_sharpe']:.2f} | 全周期年化 {cat['full_annual_return']*100:.2f}% | 三折通过: {cat['oos_3fold_pass']} | 参数: {cat['params']}")
+    print("-" * 80)
+    print(f" 68组寻优明细报表: {csv_path}")
+    print(f" 最优策略参数配置: {json_path}")
+    print(f" 最优策略净值曲线: {img_path}")
+    print("=" * 80)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="A股量化回测系统 - 命令行统一运行入口",
@@ -406,9 +446,11 @@ def main():
         handle_validate(args)
     elif args.mode == "backtest":
         handle_backtest(args)
-    elif args.mode in ["optimize", "web"]:
-        print(f"模式 [{args.mode}] 属于后续 Phase 规划内容，将在对应阶段完成开发接入。")
-        print("当前阶段推荐使用: python app.py --mode backtest [--sample]")
+    elif args.mode == "optimize":
+        handle_optimize(args)
+    elif args.mode == "web":
+        print(f"模式 [{args.mode}] 属于 Phase 5 规划内容，将在下一阶段完成可视化看板开发。")
+        print("当前阶段推荐使用: python app.py --mode optimize")
     else:
         parser.print_help()
 
