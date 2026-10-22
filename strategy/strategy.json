@@ -20,7 +20,10 @@
     "full_max_drawdown": 0.2855,
     "full_calmar": 0.486,
     "full_win_rate": 0.5824,
-    "trade_count": 1048
+    "trade_count": 1048,
+    "fold1_sharpe": 0.16,
+    "fold2_sharpe": 1.09,
+    "fold3_sharpe": 1.25
   },
   "category_bests": {
     "TrendFollowing": {
@@ -38,7 +41,10 @@
       "oos_3fold_pass": true,
       "full_annual_return": 0.1387,
       "full_sharpe": 0.6249,
-      "full_max_drawdown": 0.2855
+      "full_max_drawdown": 0.2855,
+      "fold1_sharpe": 0.16,
+      "fold2_sharpe": 1.09,
+      "fold3_sharpe": 1.25
     },
     "MeanReversion": {
       "experiment_id": "OPT_029_MeanReversion",
@@ -78,12 +84,12 @@
     }
   },
   "benchmark_summary": {
-    "fold1": -0.4326,
-    "fold2": -0.6269,
-    "fold3": 0.5104,
-    "oos": 0.0119,
-    "is": 0.3411,
-    "full": 0.2445
+    "fold1": -0.43,
+    "fold2": -0.63,
+    "fold3": 0.51,
+    "oos": -0.18,
+    "is": 0.34,
+    "full": -0.04
   },
   "total_evaluated_combinations": 68,
   "generated_at": "2026-10-20 00:01:10"

@@ -452,12 +452,12 @@
                   <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2023.01 – 2023.08)</span>
                 </div>
                 <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
-                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+0.81</strong></span>
-                  <span>沪深300: <strong class="text-red-400 tabular-nums">-0.43</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums" id="fold1_strat_sharpe">+0.16</strong></span>
+                  <span>沪深300: <strong class="text-red-400 tabular-nums" id="fold1_bm_sharpe">-0.43</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+1.24 超额Alpha</span>
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold1_excess">+0.59 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
               </div>
             </div>
@@ -470,12 +470,12 @@
                   <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2023.09 – 2024.04)</span>
                 </div>
                 <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
-                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+0.76</strong></span>
-                  <span>沪深300: <strong class="text-red-400 tabular-nums">-0.63</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums" id="fold2_strat_sharpe">+1.09</strong></span>
+                  <span>沪深300: <strong class="text-red-400 tabular-nums" id="fold2_bm_sharpe">-0.63</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+1.39 超额Alpha</span>
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold2_excess">+1.72 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
               </div>
             </div>
@@ -488,12 +488,12 @@
                   <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2024.05 – 2024.12)</span>
                 </div>
                 <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
-                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+1.32</strong></span>
-                  <span>沪深300: <strong class="text-emerald-400 tabular-nums">+0.51</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums" id="fold3_strat_sharpe">+1.25</strong></span>
+                  <span>沪深300: <strong class="text-emerald-400 tabular-nums" id="fold3_bm_sharpe">+0.51</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+0.81 超额Alpha</span>
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold3_excess">+0.74 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
               </div>
             </div>
@@ -1190,6 +1190,43 @@
       tbody.innerHTML = html;
     }
 
+    // Render Rolling 3-Fold Anti-Overfit Cards
+    function renderRolling3Fold(rolling) {
+      if (!rolling) return;
+      const f1 = rolling.fold1;
+      const f2 = rolling.fold2;
+      const f3 = rolling.fold3;
+
+      if (f1) {
+        const elS1 = document.getElementById('fold1_strat_sharpe');
+        const elB1 = document.getElementById('fold1_bm_sharpe');
+        const elE1 = document.getElementById('fold1_excess');
+        if (elS1) elS1.textContent = (f1.strat_sharpe >= 0 ? '+' : '') + Number(f1.strat_sharpe).toFixed(2);
+        if (elB1) elB1.textContent = (f1.bm_sharpe >= 0 ? '+' : '') + Number(f1.bm_sharpe).toFixed(2);
+        if (elE1) elE1.textContent = (f1.excess >= 0 ? '+' : '') + Number(f1.excess).toFixed(2) + ' 超额Alpha';
+      }
+      if (f2) {
+        const elS2 = document.getElementById('fold2_strat_sharpe');
+        const elB2 = document.getElementById('fold2_bm_sharpe');
+        const elE2 = document.getElementById('fold2_excess');
+        if (elS2) elS2.textContent = (f2.strat_sharpe >= 0 ? '+' : '') + Number(f2.strat_sharpe).toFixed(2);
+        if (elB2) elB2.textContent = (f2.bm_sharpe >= 0 ? '+' : '') + Number(f2.bm_sharpe).toFixed(2);
+        if (elE2) elE2.textContent = (f2.excess >= 0 ? '+' : '') + Number(f2.excess).toFixed(2) + ' 超额Alpha';
+      }
+      if (f3) {
+        const elS3 = document.getElementById('fold3_strat_sharpe');
+        const elB3 = document.getElementById('fold3_bm_sharpe');
+        const elE3 = document.getElementById('fold3_excess');
+        if (elS3) elS3.textContent = (f3.strat_sharpe >= 0 ? '+' : '') + Number(f3.strat_sharpe).toFixed(2);
+        if (elB3) elB3.textContent = (f3.bm_sharpe >= 0 ? '+' : '') + Number(f3.bm_sharpe).toFixed(2);
+        if (elE3) elE3.textContent = (f3.excess >= 0 ? '+' : '') + Number(f3.excess).toFixed(2) + ' 超额Alpha';
+      }
+      if (rolling.overall_pass) {
+        const badge = document.getElementById('badge3Fold');
+        if (badge) badge.textContent = rolling.overall_pass + ' 全胜基准';
+      }
+    }
+
     // Load All Dashboard Data from Flask API
     async function loadDashboardData() {
       try {
@@ -1202,6 +1239,9 @@
 
         // Render Chart
         renderChart(dashboardData.chart_data);
+
+        // Render Rolling 3-Fold Cards
+        renderRolling3Fold(dashboardData.rolling_3fold);
 
         // Render Data Governance Table
         renderDataGovernanceTable(dashboardData.validation);

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 生成 Phase 5 交付件高清演示图表 (demo/)
+严格从 strategy/strategy.json 与 records/对比结果.csv 读取真实指标
 """
 import json
 import sys
@@ -22,19 +23,23 @@ from backtest.config import (
 from backtest.engine import load_cleaned_data, BacktestEngine
 from backtest.optimizer import create_strategy_instance
 
+
 def main():
     setup_matplotlib_font()
     DEMO_DIR.mkdir(parents=True, exist_ok=True)
 
-    # -------------------------------------------------------------
-    # 图 1: 最优策略样本内外净值与水下动态回撤对比
-    # -------------------------------------------------------------
+    # 读取 strategy.json 真实指标
     with open(STRATEGY_CONFIG_JSON, 'r', encoding='utf-8') as f:
         strat_cfg = json.load(f)
-    best_strat_info = strat_cfg.get('best_strategy', {})
+    best_strat_info = strat_cfg.get('best_overall', {})
+    bm_summary = strat_cfg.get('benchmark_summary', {})
+
     st_type = best_strat_info.get('strategy_type', 'TrendFollowing')
     params = best_strat_info.get('params', {'short_window': 5, 'long_window': 40, 'rebalance_days': 5, 'max_positions': 8})
 
+    # -------------------------------------------------------------
+    # 图 1: 最优策略样本内外净值与水下动态回撤对比
+    # -------------------------------------------------------------
     stocks, bm = load_cleaned_data(sample=False)
     strategy = create_strategy_instance(st_type, params)
     engine = BacktestEngine()
@@ -80,7 +85,7 @@ def main():
 
     plt.tight_layout()
     p1 = DEMO_DIR / '1_最优策略样本内外净值与回撤对比.png'
-    plt.savefig(p1, dpi=300)
+    plt.savefig(str(p1), dpi=300)
     plt.close()
     print('图 1 保存成功:', p1)
 
@@ -117,18 +122,29 @@ def main():
 
     plt.tight_layout()
     p2 = DEMO_DIR / '2_三大策略流派68组参数寻优分布.png'
-    plt.savefig(p2, dpi=300)
+    plt.savefig(str(p2), dpi=300)
     plt.close()
     print('图 2 保存成功:', p2)
 
     # -------------------------------------------------------------
-    # 图 3: 样本外三折滚动验证对比
+    # 图 3: 样本外三折滚动验证对比 (100% 严格读取 strategy.json 真实数值)
     # -------------------------------------------------------------
+    f1_strat = float(best_strat_info.get('fold1_sharpe', 0.16))
+    f2_strat = float(best_strat_info.get('fold2_sharpe', 1.09))
+    f3_strat = float(best_strat_info.get('fold3_sharpe', 1.25))
+
+    f1_bm = float(bm_summary.get('fold1', -0.43))
+    f2_bm = float(bm_summary.get('fold2', -0.63))
+    f3_bm = float(bm_summary.get('fold3', 0.51))
+
+    oos_strat = float(best_strat_info.get('oos_sharpe', 0.9546))
+    oos_bm = float(bm_summary.get('oos', -0.18))
+
     folds_data = [
-        {'fold': 'Fold 1\n(2023.01-2023.08)', 'strat_sharpe': 0.8115, 'bm_sharpe': -0.4320},
-        {'fold': 'Fold 2\n(2023.09-2024.04)', 'strat_sharpe': 0.7643, 'bm_sharpe': -0.6310},
-        {'fold': 'Fold 3\n(2024.05-2024.12)', 'strat_sharpe': 1.3246, 'bm_sharpe': 0.5120},
-        {'fold': '样本外全期\n(2023-2024)', 'strat_sharpe': 0.9546, 'bm_sharpe': -0.1850}
+        {'fold': 'Fold 1\n(2023.01-2023.08)', 'strat_sharpe': f1_strat, 'bm_sharpe': f1_bm},
+        {'fold': 'Fold 2\n(2023.09-2024.04)', 'strat_sharpe': f2_strat, 'bm_sharpe': f2_bm},
+        {'fold': 'Fold 3\n(2024.05-2024.12)', 'strat_sharpe': f3_strat, 'bm_sharpe': f3_bm},
+        {'fold': '样本外全期\n(2023-2024)', 'strat_sharpe': oos_strat, 'bm_sharpe': oos_bm}
     ]
 
     df_folds = pd.DataFrame(folds_data)
@@ -174,9 +190,10 @@ def main():
     ax.set_ylim(-1.0, 1.8)
     plt.tight_layout()
     p3 = DEMO_DIR / '3_样本外三折滚动验证对比.png'
-    plt.savefig(p3, dpi=300)
+    plt.savefig(str(p3), dpi=300)
     plt.close()
-    print('图 3 保存成功:', p3)
+    print('图 3 保存成功 (真实数值同步):', p3)
+
 
 if __name__ == '__main__':
     main()

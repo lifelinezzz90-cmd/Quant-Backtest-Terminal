@@ -71,7 +71,8 @@ Quant/
 │   ├── engine.py                # A 股高拟真撮合引擎与状态机
 │   ├── metrics.py               # 绩效指标计算与净值曲线绘制
 │   ├── logger.py                # 实验记录与日志结构化落盘
-│   └── optimizer.py             # 68 组网格寻优与三折防过拟合滚动验证
+│   ├── optimizer.py             # 68 组网格寻优与三折防过拟合滚动验证
+│   └── generate_demo_charts.py  # 高清交付成果图表生成脚本
 ├── strategies/                  # 三大策略模型家族
 │   ├── base.py                  # 策略抽象基类与等权基准策略
 │   ├── trend_following.py       # 趋势跟踪双均线模型 (TrendFollowing)
