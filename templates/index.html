@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html class="dark" lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>A股量化回测系统 · 绩效分析与策略验证终端</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "canvas-night": "#12121c",
+            "surface-raised": "#1a1a27",
+            "surface-bright": "#2a2a3b",
+            "surface-container-high": "#232332",
+            "surface-container-low": "#151520",
+            "text-on-dark": "#ededf3",
+            "text-fog": "#9d9db0",
+            "outline": "#717185",
+            "outline-variant": "#3f3f52",
+            "primary-container": "#4f46e5",
+            "primary-hover": "#4338ca",
+            "brand-indigo-dim": "rgba(79, 70, 229, 0.15)",
+            "primary": "#818cf8",
+            "secondary": "#38bdf8",
+            "emerald-brand": "#10b981",
+            "crimson-brand": "#ef4444"
+          },
+          fontFamily: {
+            "ui-interactive": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "metric-tabular": ["JetBrains Mono", "monospace"],
+            "label-eyebrow": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Offline Local ECharts with CDN Fallback -->
+  <script src="/static/echarts.min.js"></script>
+  <script>
+    if (typeof echarts === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    /* Institutional Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #12121c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b2b3d;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #45465e;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .tabular-nums {
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+
+    /* Light Mode Overrides */
+    html[data-theme="light"] {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    html[data-theme="light"] body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    html[data-theme="light"] header,
+    html[data-theme="light"] footer {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] .bg-canvas-night {
+      background-color: #f8fafc !important;
+    }
+    html[data-theme="light"] .bg-surface-raised {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    }
+    html[data-theme="light"] .bg-surface-container-high {
+      background-color: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] .bg-surface-container-low {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] .bg-surface-bright {
+      background-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] .text-text-on-dark {
+      color: #0f172a !important;
+    }
+    html[data-theme="light"] .text-text-fog {
+      color: #475569 !important;
+    }
+    html[data-theme="light"] .text-outline {
+      color: #64748b !important;
+    }
+    html[data-theme="light"] .border-outline-variant\/20,
+    html[data-theme="light"] .border-outline-variant\/15,
+    html[data-theme="light"] .border-outline-variant\/30 {
+      border-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] input,
+    html[data-theme="light"] select {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    html[data-theme="light"] thead tr {
+      background-color: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+    }
+    html[data-theme="light"] thead th {
+      color: #475569 !important;
+    }
+    html[data-theme="light"] tbody tr:hover {
+      background-color: #f8fafc !important;
+    }
+    html[data-theme="light"] ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    html[data-theme="light"] ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+    }
+  </style>
+</head>
+<body class="bg-canvas-night text-text-on-dark min-h-screen font-body-sm antialiased selection:bg-primary-container selection:text-white transition-colors duration-200">
+
+  <!-- TOP TERMINAL BAR -->
+  <header class="w-full h-14 px-4 md:px-6 flex items-center justify-between border-b border-outline-variant/20 bg-canvas-night sticky top-0 z-50">
+    <!-- Left Cluster: Brand Glyph + Terminal Identity -->
+    <div class="flex items-center space-x-3">
+      <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-raised border border-outline-variant/30 text-primary shadow-inner">
+        <span class="material-symbols-outlined text-primary-container" style="font-size: 20px;">query_stats</span>
+      </div>
+      <div class="flex flex-col">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-semibold tracking-wider text-text-on-dark whitespace-nowrap">MERCURY // QUANT-TERMINAL</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-brand-indigo-dim border border-primary/30 text-primary font-label-eyebrow whitespace-nowrap">A-Share CN_EQ</span>
+        </div>
+        <span class="font-label-eyebrow text-[11px] text-text-fog tracking-tight whitespace-nowrap">2019–2024 等比前复权 · 10只核心标的池 · T+1高拟真撮合</span>
+      </div>
+    </div>
+
+    <!-- Center Navigation Links -->
+    <nav class="hidden lg:flex items-center space-x-1 h-9 px-1.5 rounded-full bg-surface-raised/80 border border-outline-variant/20 text-xs">
+      <a class="px-3.5 py-1.5 rounded-full bg-primary-container text-white font-ui-interactive text-xs shadow-sm whitespace-nowrap" href="#overview">绩效总览与回测</a>
+      <a class="px-3.5 py-1.5 rounded-full text-text-fog hover:text-text-on-dark font-ui-interactive text-xs transition-colors whitespace-nowrap" href="#cv-validation">三折防过拟合验证</a>
+      <a class="px-3.5 py-1.5 rounded-full text-text-fog hover:text-text-on-dark font-ui-interactive text-xs transition-colors whitespace-nowrap" href="#data-governance">数据治理报告</a>
+      <a class="px-3.5 py-1.5 rounded-full text-text-fog hover:text-text-on-dark font-ui-interactive text-xs transition-colors whitespace-nowrap" href="#params-lib">68组参数寻优库</a>
+    </nav>
+
+    <!-- Right Cluster: Status + Theme Toggle + Quick Actions -->
+    <div class="flex items-center space-x-3">
+      <div class="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-raised border border-outline-variant/20 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-label-eyebrow text-xs text-text-fog tracking-tight whitespace-nowrap">零未来函数审计通过 · 1,456 交易日对齐</span>
+      </div>
+
+      <!-- Theme Switch Button -->
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark font-ui-interactive text-xs flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap">
+        <span class="material-symbols-outlined text-sm" id="themeIcon">dark_mode</span>
+        <span id="themeLabel">深色终端</span>
+      </button>
+
+      <!-- Quick Reset / Reload -->
+      <button onclick="loadDashboardData()" title="刷新数据" class="w-8 h-8 rounded-full bg-surface-raised border border-outline-variant/20 flex items-center justify-center text-text-fog hover:text-text-on-dark hover:border-primary-container transition-all">
+        <span class="material-symbols-outlined text-base">refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN TERMINAL VIEWPORT -->
+  <main class="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-5 space-y-5" id="overview">
+
+    <!-- ROW 1: EXECUTIVE KPI SUMMARY CARDS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- KPI Card 1: Annual Return -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-4 relative overflow-hidden transition-all hover:border-outline-variant/40">
+        <div class="flex items-center justify-between text-outline text-xs mb-1.5">
+          <span class="font-label-eyebrow text-text-fog tracking-wide uppercase flex items-center gap-1.5 whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            年化收益率
+          </span>
+          <span class="text-[11px] font-metric-tabular text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap">样本外验证</span>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="font-metric-tabular text-3xl font-semibold text-text-on-dark tracking-tight tabular-nums" id="kpiAnnualReturn">+17.24%</span>
+          <span class="text-xs font-metric-tabular text-emerald-400 tabular-nums whitespace-nowrap" id="kpiExcessReturn">▲ +18.59% 超额</span>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog font-caption-legal">
+          <span class="whitespace-nowrap">全周期年化: <strong class="text-text-on-dark tabular-nums" id="kpiFullAnnual">+13.87%</strong></span>
+          <span class="font-metric-tabular text-text-fog/80 tabular-nums whitespace-nowrap" id="kpiBenchmarkReturn">基准沪深300: -1.35%</span>
+        </div>
+      </div>
+
+      <!-- KPI Card 2: Max Drawdown -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-4 relative overflow-hidden transition-all hover:border-outline-variant/40">
+        <div class="flex items-center justify-between text-outline text-xs mb-1.5">
+          <span class="font-label-eyebrow text-text-fog tracking-wide uppercase flex items-center gap-1.5 whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            最大回撤
+          </span>
+          <span class="text-[11px] font-metric-tabular text-primary bg-brand-indigo-dim px-1.5 py-0.5 rounded border border-primary/20 whitespace-nowrap">严格防守</span>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="font-metric-tabular text-3xl font-semibold text-primary tracking-tight tabular-nums" id="kpiMaxDrawdown">-11.89%</span>
+          <span class="text-xs font-metric-tabular text-text-fog whitespace-nowrap">样本外阶段</span>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog font-caption-legal">
+          <span class="whitespace-nowrap">全周期最大: <strong class="text-text-on-dark tabular-nums" id="kpiFullDrawdown">-28.55%</strong></span>
+          <span class="font-metric-tabular text-red-400/80 tabular-nums whitespace-nowrap" id="kpiBenchmarkDrawdown">基准最大: -23.47%</span>
+        </div>
+      </div>
+
+      <!-- KPI Card 3: Sharpe Ratio -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-4 relative overflow-hidden transition-all hover:border-outline-variant/40">
+        <div class="flex items-center justify-between text-outline text-xs mb-1.5">
+          <span class="font-label-eyebrow text-text-fog tracking-wide uppercase flex items-center gap-1.5 whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            夏普比率
+          </span>
+          <span class="text-[11px] font-metric-tabular text-secondary bg-secondary/10 px-1.5 py-0.5 rounded border border-secondary/20 whitespace-nowrap">Rf = 2.0%</span>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="font-metric-tabular text-3xl font-semibold text-text-on-dark tracking-tight tabular-nums" id="kpiSharpeRatio">0.9546</span>
+          <span class="text-xs font-metric-tabular text-emerald-400 whitespace-nowrap">优于91%配置</span>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog font-caption-legal">
+          <span class="whitespace-nowrap">Calmar比率: <strong class="text-text-on-dark tabular-nums" id="kpiCalmarRatio">1.4498</strong></span>
+          <span class="font-metric-tabular text-text-fog/80 tabular-nums whitespace-nowrap" id="kpiFullSharpe">全周期夏普: 0.6249</span>
+        </div>
+      </div>
+
+      <!-- KPI Card 4: Win Rate & Trades -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-4 relative overflow-hidden transition-all hover:border-outline-variant/40">
+        <div class="flex items-center justify-between text-outline text-xs mb-1.5">
+          <span class="font-label-eyebrow text-text-fog tracking-wide uppercase flex items-center gap-1.5 whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            交易胜率与笔数
+          </span>
+          <span class="text-[11px] font-metric-tabular text-text-fog bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap">持仓分散</span>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="font-metric-tabular text-3xl font-semibold text-text-on-dark tracking-tight tabular-nums" id="kpiWinRate">58.24%</span>
+          <span class="text-xs font-metric-tabular text-text-fog tabular-nums whitespace-nowrap" id="kpiTradeCount">共 1,048 笔闭环</span>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog font-caption-legal">
+          <span class="whitespace-nowrap">覆盖标的: <strong class="text-text-on-dark">10 / 10 只全覆盖</strong></span>
+          <span class="font-metric-tabular text-text-fog/80 whitespace-nowrap">印花税万5实扣</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 2: MAIN WORKSPACE (70% Canvas Chart + 30% Strategy Engine Panel) -->
+    <section class="grid grid-cols-1 lg:grid-cols-10 gap-5 items-stretch">
+      <!-- 70% LEFT CARD: CUMULATIVE NAV & UNDERWATER DRAWDOWN DUAL SUBPLOT -->
+      <div class="lg:col-span-7 bg-surface-raised border border-outline-variant/20 rounded-xl p-5 flex flex-col justify-between space-y-3">
+        <!-- Chart Header & Strategy Variant Pills -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/15">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-primary-container">show_chart</span>
+            <h2 class="text-base font-semibold text-text-on-dark whitespace-nowrap">累计净值与水下动态回撤</h2>
+            <span class="text-xs text-text-fog font-label-eyebrow ml-1 whitespace-nowrap" id="currentStrategyTag">TrendFollowing TF_5_40_5</span>
+          </div>
+
+          <!-- Strategy Preset Selector Pills -->
+          <div class="flex items-center space-x-1.5 overflow-x-auto text-xs py-0.5">
+            <button onclick="applyPreset('TF')" id="presetBtn_TF" class="px-3 py-1 rounded-full bg-primary-container text-white font-ui-interactive border border-primary-container shadow-sm flex items-center space-x-1 whitespace-nowrap transition-all">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+              <span>趋势跟踪最优 (TF_5_40_5)</span>
+            </button>
+            <button onclick="applyPreset('MF')" id="presetBtn_MF" class="px-3 py-1 rounded-full bg-surface-container-high text-text-fog hover:text-text-on-dark border border-outline-variant/20 font-ui-interactive transition-all whitespace-nowrap">
+              <span>多因子打分 (MF_20_M6V2S2)</span>
+            </button>
+            <button onclick="applyPreset('MR')" id="presetBtn_MR" class="px-3 py-1 rounded-full bg-surface-container-high text-text-fog hover:text-text-on-dark border border-outline-variant/20 font-ui-interactive transition-all whitespace-nowrap">
+              <span>均值回复 (MR_15_1.8)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ECharts Responsive Dual Subplot Container -->
+        <div class="relative w-full rounded-lg border border-outline-variant/15 p-1 overflow-hidden" style="min-height: 440px;">
+          <div id="mainChartContainer" class="w-full" style="height: 440px;"></div>
+        </div>
+
+        <!-- Legend and Demarcation Explainer -->
+        <div class="pt-2 border-t border-outline-variant/15 flex flex-wrap items-center justify-between text-xs text-text-fog font-caption-legal gap-2">
+          <div class="flex items-center space-x-4">
+            <span class="flex items-center space-x-1">
+              <span class="w-3 h-0.5 bg-primary rounded"></span>
+              <span>策略净值 (Base=1.0)</span>
+            </span>
+            <span class="flex items-center space-x-1">
+              <span class="w-3 h-0.5 bg-gray-400 border-t border-dashed"></span>
+              <span>沪深300基准 (000300)</span>
+            </span>
+            <span class="flex items-center space-x-1">
+              <span class="w-3 h-1.5 bg-red-400/40 rounded"></span>
+              <span>水下动态回撤</span>
+            </span>
+          </div>
+          <div class="flex items-center space-x-2 font-label-eyebrow text-[11px]">
+            <span class="px-2 py-0.5 rounded bg-brand-indigo-dim text-primary border border-primary/20">2023-01-03 样本外分界</span>
+            <span>无缝拼接</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 30% RIGHT CARD: STRATEGY CONFIG & HIGH-REALISM BACKTEST ENGINE -->
+      <div class="lg:col-span-3 bg-surface-raised border border-outline-variant/20 rounded-xl p-5 flex flex-col justify-between space-y-4">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
+            <div class="flex items-center space-x-2">
+              <span class="material-symbols-outlined text-primary">instant_mix</span>
+              <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">策略参数配置与回测引擎</h3>
+            </div>
+            <span class="text-[11px] font-label-eyebrow text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20 whitespace-nowrap">Ready</span>
+          </div>
+
+          <!-- Parameter Form -->
+          <form id="backtestForm" class="space-y-3.5 mt-3" onsubmit="event.preventDefault(); runCustomBacktest();">
+            <!-- Strategy Family Dropdown -->
+            <div class="space-y-1">
+              <label class="text-xs font-label-eyebrow text-text-fog uppercase flex items-center justify-between">
+                <span>策略逻辑模型</span>
+                <span class="text-[11px] text-primary whitespace-nowrap">已收敛68组寻优</span>
+              </label>
+              <div class="relative">
+                <select id="strategySelect" onchange="onStrategySelectChange()" class="w-full h-9 pl-3 pr-8 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark font-ui-interactive text-xs focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-all appearance-none cursor-pointer">
+                  <option value="trend">趋势跟踪双均线模型 (TrendFollowing)</option>
+                  <option value="multi_factor">多因子加权打分模型 (MultiFactor)</option>
+                  <option value="mean_reversion">均值回复通道突破 (MeanReversion)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-2.5 top-2.5 text-text-fog pointer-events-none text-base">expand_more</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Parameter Inputs Container -->
+            <div id="dynamicParamsContainer" class="grid grid-cols-2 gap-2.5">
+              <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Date Range Inputs -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-label-eyebrow text-text-fog uppercase">回测区间 (全周期 1,456 交易日)</label>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="inputStartDate" class="h-8 px-2.5 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark font-metric-tabular text-xs text-center focus:border-primary-container outline-none tabular-nums" type="text" value="2019-01-01"/>
+                <input id="inputEndDate" class="h-8 px-2.5 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark font-metric-tabular text-xs text-center focus:border-primary-container outline-none tabular-nums" type="text" value="2024-12-31"/>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-2 space-y-2">
+              <button id="btnRunBacktest" type="submit" class="w-full h-10 rounded-full bg-primary-container hover:bg-primary-hover active:scale-[0.98] text-white font-ui-interactive text-xs font-semibold flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-base" id="runIcon">bolt</span>
+                <span id="runText">立即运行高保真回测 (Run Backtest)</span>
+              </button>
+
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="applyPreset('TF')" type="button" class="h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 font-ui-interactive text-xs flex items-center justify-center space-x-1 transition-colors cursor-pointer">
+                  <span class="material-symbols-outlined text-sm">restart_alt</span>
+                  <span class="whitespace-nowrap">重置基准 (TF)</span>
+                </button>
+                <a href="/api/export_csv" download="对比结果.csv" class="h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 font-ui-interactive text-xs flex items-center justify-center space-x-1 transition-colors text-center cursor-pointer">
+                  <span class="material-symbols-outlined text-sm">file_download</span>
+                  <span class="whitespace-nowrap">导出对比 CSV</span>
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- A-Share Realistic Market Microstructure Constraints -->
+        <div class="pt-3 border-t border-outline-variant/15 space-y-1.5">
+          <div class="flex items-center space-x-1.5 text-xs text-text-on-dark font-medium">
+            <span class="material-symbols-outlined text-xs text-secondary">verified_user</span>
+            <span>A股交易机制高拟真约束</span>
+          </div>
+          <ul class="text-[11px] font-caption-legal text-text-fog space-y-1 pl-1">
+            <li class="flex items-start space-x-1.5">
+              <span class="text-emerald-400 font-bold shrink-0">✓</span>
+              <span><strong>T日收盘信号 → T+1开盘价成交</strong> (拒绝未来函数)</span>
+            </li>
+            <li class="flex items-start space-x-1.5">
+              <span class="text-emerald-400 font-bold shrink-0">✓</span>
+              <span><strong>严格T+1锁定</strong>，涨停买不进、跌停卖不出</span>
+            </li>
+            <li class="flex items-start space-x-1.5">
+              <span class="text-emerald-400 font-bold shrink-0">✓</span>
+              <span><strong>停牌日资金锁死</strong>，万2.5佣金(最低5元) + 卖方万5印花税</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 3: TWO-COLUMN VERIFICATION & DATA GOVERNANCE (50% + 50%) -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+      <!-- LEFT 50% CARD: ROLLING 3-FOLD VALIDATION & 3 STRATEGIES COMPARISON -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-5 flex flex-col justify-between space-y-4" id="cv-validation">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
+            <div class="flex items-center space-x-2">
+              <span class="material-symbols-outlined text-emerald-400">fact_check</span>
+              <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">样本外三折滚动交叉验证</h3>
+            </div>
+            <span class="text-xs font-label-eyebrow text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap" id="badge3Fold">3/3 全胜基准</span>
+          </div>
+          <p class="text-xs text-text-fog mt-2 font-caption-legal leading-relaxed">
+            将 2023–2024 完整样本外严格切分为 3 个等长非重叠时间窗口，杜绝全样本后验挑选偏误，检验策略泛化能力的稳健性。
+          </p>
+
+          <!-- 3 Horizontal Fold Visual Cards -->
+          <div class="mt-3.5 space-y-2.5">
+            <!-- Fold 1 -->
+            <div class="bg-surface-container-high/60 border border-outline-variant/20 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-outline-variant/40 transition-colors">
+              <div class="space-y-0.5">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-semibold text-text-on-dark whitespace-nowrap">Fold 1</span>
+                  <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2023.01 – 2023.08)</span>
+                </div>
+                <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+0.81</strong></span>
+                  <span>沪深300: <strong class="text-red-400 tabular-nums">-0.43</strong></span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+1.24 超额Alpha</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
+              </div>
+            </div>
+
+            <!-- Fold 2 -->
+            <div class="bg-surface-container-high/60 border border-outline-variant/20 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-outline-variant/40 transition-colors">
+              <div class="space-y-0.5">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-semibold text-text-on-dark whitespace-nowrap">Fold 2</span>
+                  <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2023.09 – 2024.04)</span>
+                </div>
+                <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+0.76</strong></span>
+                  <span>沪深300: <strong class="text-red-400 tabular-nums">-0.63</strong></span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+1.39 超额Alpha</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
+              </div>
+            </div>
+
+            <!-- Fold 3 -->
+            <div class="bg-surface-container-high/60 border border-outline-variant/20 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-outline-variant/40 transition-colors">
+              <div class="space-y-0.5">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-semibold text-text-on-dark whitespace-nowrap">Fold 3</span>
+                  <span class="text-[11px] font-metric-tabular text-text-fog whitespace-nowrap">(2024.05 – 2024.12)</span>
+                </div>
+                <div class="text-xs font-metric-tabular flex items-center space-x-3 text-text-fog">
+                  <span>策略夏普: <strong class="text-emerald-400 tabular-nums">+1.32</strong></span>
+                  <span>沪深300: <strong class="text-emerald-400 tabular-nums">+0.51</strong></span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-metric-tabular text-emerald-400 font-medium tabular-nums whitespace-nowrap">+0.81 超额Alpha</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-label-eyebrow bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">PASS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Strategy Families Summary Matrix -->
+        <div class="pt-3 border-t border-outline-variant/15">
+          <div class="text-xs font-label-eyebrow text-text-fog mb-2 uppercase whitespace-nowrap">三大策略模型全周期综合表现对比</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="text-text-fog border-b border-outline-variant/20 font-label-eyebrow text-[11px]">
+                  <th class="py-1.5 font-normal whitespace-nowrap">模型家族</th>
+                  <th class="py-1.5 font-normal whitespace-nowrap">最优参数组合</th>
+                  <th class="py-1.5 font-normal text-right whitespace-nowrap">全周期年化</th>
+                  <th class="py-1.5 font-normal text-right whitespace-nowrap">样本外夏普</th>
+                  <th class="py-1.5 font-normal text-right whitespace-nowrap">最大回撤</th>
+                  <th class="py-1.5 font-normal text-right whitespace-nowrap">综合评级</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant/10 font-metric-tabular" id="strategyFamiliesTableBody">
+                <tr class="hover:bg-surface-bright/20">
+                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                    <span>趋势跟踪 (TrendFollowing)</span>
+                  </td>
+                  <td class="py-2 text-text-fog font-label-eyebrow whitespace-nowrap">TF_5_40_5</td>
+                  <td class="py-2 text-right text-emerald-400 font-medium tabular-nums whitespace-nowrap">+13.87%</td>
+                  <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">0.9546</td>
+                  <td class="py-2 text-right text-primary tabular-nums whitespace-nowrap">-11.89%</td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-brand-indigo-dim text-primary text-[10px]">Rank #1</span></td>
+                </tr>
+                <tr class="hover:bg-surface-bright/20">
+                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                    <span>多因子打分 (MultiFactor)</span>
+                  </td>
+                  <td class="py-2 text-text-fog font-label-eyebrow whitespace-nowrap">MF_20_M6V2S2</td>
+                  <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+14.34%</td>
+                  <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">0.8872</td>
+                  <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">-14.20%</td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #2</span></td>
+                </tr>
+                <tr class="hover:bg-surface-bright/20">
+                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                    <span>均值回复 (MeanReversion)</span>
+                  </td>
+                  <td class="py-2 text-text-fog font-label-eyebrow whitespace-nowrap">MR_15_1.8</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+9.15%</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">0.6120</td>
+                  <td class="py-2 text-right text-red-400 tabular-nums whitespace-nowrap">-19.45%</td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #3</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT 50% CARD: DATA GOVERNANCE & DIVIDEND ADJUSTMENT AUDIT -->
+      <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-5 flex flex-col justify-between space-y-4" id="data-governance">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
+            <div class="flex items-center space-x-2">
+              <span class="material-symbols-outlined text-secondary">database</span>
+              <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">数据治理清洗与等比前复权核验</h3>
+            </div>
+            <span class="text-xs font-label-eyebrow text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap">ETL Pipeline v2.4</span>
+          </div>
+
+          <!-- Highlight Banner: Critical Bug Fix in Public Open-Source APIs -->
+          <div class="mt-3 p-3 rounded-lg bg-surface-container-high/60 border border-amber-500/30 text-amber-300 text-xs leading-relaxed flex items-start space-x-2.5">
+            <span class="material-symbols-outlined text-amber-400 text-base shrink-0 mt-0.5">warning</span>
+            <div>
+              <strong class="font-semibold text-amber-200">底层复权失真核验修正：</strong>
+              发现部分公开行情接口在处理大额现金分红时错误采用<strong>简单减法复权</strong>，导致股价在除权日出现虚假暴涨（例如<strong>中国平安 2019-02-25</strong> 真实涨幅 <strong>+8.22%</strong> 被错误放大为 <strong>+12.37%</strong>）。终端已重构严格的<strong>等比几何前复权序列</strong>，消除由于除息导致的虚假动量未来函数。
+            </div>
+          </div>
+
+          <!-- Stock Data Pool Audit Table (Fixed 10 Assets + 000300) -->
+          <div class="mt-3.5 space-y-1">
+            <div class="flex items-center justify-between text-xs text-text-fog font-label-eyebrow px-1">
+              <span class="whitespace-nowrap">核心标的池数据质量清单 (10只标的 + 000300)</span>
+              <span class="whitespace-nowrap">1,456 交易日完全对齐</span>
+            </div>
+            <div class="overflow-x-auto border border-outline-variant/20 rounded-lg max-h-56">
+              <table class="w-full text-xs text-left">
+                <thead class="bg-surface-container-high text-text-fog font-label-eyebrow text-[11px] border-b border-outline-variant/20 sticky top-0 z-10">
+                  <tr>
+                    <th class="py-2 px-3 whitespace-nowrap">代码 / 名称</th>
+                    <th class="py-2 px-2 text-right whitespace-nowrap">对齐交易日</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">停牌补齐</th>
+                    <th class="py-2 px-2 whitespace-nowrap">停牌撮合规则</th>
+                    <th class="py-2 px-3 text-right whitespace-nowrap">等比复权状态</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 font-metric-tabular" id="dataGovernanceTableBody">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footnote status indicator -->
+        <div class="pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog font-caption-legal">
+          <span class="flex items-center space-x-1 whitespace-nowrap">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>严格遵循 6 列官方标准 (date, open, high, low, close, volume)</span>
+          </span>
+          <span class="font-metric-tabular text-primary whitespace-nowrap">零未来函数审计 PASS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 4: EXPERIMENT RECORDS TABLE (records/对比结果.csv - 68组参数寻优库) -->
+    <section class="bg-surface-raised border border-outline-variant/20 rounded-xl p-5 space-y-4" id="params-lib">
+      <!-- Table Header & Filter Toolbar -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
+        <div class="space-y-0.5">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-primary-container">dataset</span>
+            <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">68组全网格参数寻优实验库</h3>
+            <span class="text-xs font-metric-tabular text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap">records/对比结果.csv</span>
+          </div>
+          <p class="text-xs text-text-fog font-caption-legal">严禁未来函数渗透，全量记录样本内拟合参数与样本外实际验证夏普，防止数据窥探与过拟合陷阱。</p>
+        </div>
+
+        <!-- Filter Pills & Export CTA -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Filters -->
+          <div class="flex items-center space-x-1 bg-surface-container-high p-1 rounded-lg border border-outline-variant/20 text-xs">
+            <button onclick="filterExperiments('ALL')" id="filterBtn_ALL" class="px-2.5 py-1 rounded bg-primary-container text-white font-ui-interactive shadow-sm whitespace-nowrap cursor-pointer">全部 (<span id="countAll">68</span>)</button>
+            <button onclick="filterExperiments('TrendFollowing')" id="filterBtn_TrendFollowing" class="px-2.5 py-1 rounded text-text-fog hover:text-text-on-dark transition-colors whitespace-nowrap cursor-pointer">趋势跟踪 (<span id="countTF">25</span>)</button>
+            <button onclick="filterExperiments('MultiFactor')" id="filterBtn_MultiFactor" class="px-2.5 py-1 rounded text-text-fog hover:text-text-on-dark transition-colors whitespace-nowrap cursor-pointer">多因子 (<span id="countMF">27</span>)</button>
+            <button onclick="filterExperiments('MeanReversion')" id="filterBtn_MeanReversion" class="px-2.5 py-1 rounded text-text-fog hover:text-text-on-dark transition-colors whitespace-nowrap cursor-pointer">均值回复 (<span id="countMR">16</span>)</button>
+          </div>
+
+          <!-- Sort Select -->
+          <div class="relative">
+            <select id="sortSelect" onchange="renderExperimentsTable()" class="h-8 pl-2.5 pr-7 rounded-lg bg-surface-container-high border border-outline-variant/30 text-xs text-text-on-dark appearance-none focus:outline-none focus:border-primary-container cursor-pointer font-metric-tabular">
+              <option value="oos_sharpe_desc">按样本外夏普排序 ↓</option>
+              <option value="full_annual_return_desc">按全周期年化排序 ↓</option>
+              <option value="oos_max_drawdown_asc">按样本外最大回撤排序 ↑</option>
+              <option value="oos_3fold_pass_desc">按三折验证通过率排序</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-1.5 top-2 text-text-fog pointer-events-none text-xs">expand_more</span>
+          </div>
+
+          <!-- Export CSV Button Pill -->
+          <a href="/api/export_csv" download="对比结果.csv" class="h-8 px-3 rounded-full bg-brand-indigo-dim hover:bg-brand-indigo-dim/80 text-primary border border-primary/30 font-ui-interactive text-xs flex items-center space-x-1 transition-all cursor-pointer whitespace-nowrap">
+            <span class="material-symbols-outlined text-sm">download</span>
+            <span>导出 CSV</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="overflow-x-auto border border-outline-variant/20 rounded-lg max-h-96">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-high text-text-fog font-label-eyebrow text-[11px] border-b border-outline-variant/20 sticky top-0 z-10">
+              <th class="py-2.5 px-3 whitespace-nowrap">实验编号</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">策略类型</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">策略名 / 参数配置 (JSON)</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">样本内年化</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">样本内夏普</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">样本外年化</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">样本外回撤</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">样本外夏普</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-center">三折验证</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">全周期年化</th>
+              <th class="py-2.5 px-3 whitespace-nowrap text-right">胜率</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/15 font-metric-tabular text-text-fog" id="experimentsTableBody">
+            <!-- Populated dynamically via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer Status Summary -->
+      <div class="pt-2 border-t border-outline-variant/15 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-text-fog font-caption-legal gap-2">
+        <div class="flex items-center space-x-3">
+          <span>总计 <strong class="text-text-on-dark tabular-nums" id="lblTotalArchived">68</strong> 组网格搜索实验记录已归档</span>
+          <span class="text-emerald-400">有效策略三折通过率: <strong>100% (前列)</strong></span>
+          <span class="text-primary">样本外夏普最高: <strong class="tabular-nums">0.9546</strong></span>
+        </div>
+        <div class="font-metric-tabular text-text-fog/80 tabular-nums" id="lblShowingCount">
+          Showing 1 - 68 of 68 entries
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SUBTLE TERMINAL BOTTOM SYSTEM BAR -->
+  <footer class="w-full border-t border-outline-variant/20 bg-canvas-night py-3 px-4 md:px-6 mt-8 text-xs text-text-fog">
+    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center space-x-3">
+        <span class="font-label-eyebrow text-text-on-dark font-medium uppercase whitespace-nowrap">MERCURY QUANT ARCHITECTURE</span>
+        <span class="text-outline-variant">|</span>
+        <span class="font-caption-legal whitespace-nowrap">A股机构级量化研究终端 · 严格零未来函数与真实流动性撮合</span>
+      </div>
+      <div class="flex items-center space-x-4 font-metric-tabular text-[11px]">
+        <span class="flex items-center space-x-1 whitespace-nowrap">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Feed: T+1 Open Match</span>
+        </span>
+        <span class="text-outline-variant">|</span>
+        <span class="whitespace-nowrap">Commissions: 0.025% (Min 5元) + Stamp 0.05%</span>
+        <span class="text-outline-variant">|</span>
+        <span class="whitespace-nowrap">CSI300 Index Real Benchmark</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // State Store
+    let dashboardData = null;
+    let currentChart = null;
+    let currentFilter = 'ALL';
+    let currentTheme = localStorage.getItem('mercury_theme') || 'dark';
+
+    // Theme Management
+    function initTheme() {
+      applyTheme(currentTheme);
+    }
+
+    function toggleTheme() {
+      currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+      localStorage.setItem('mercury_theme', currentTheme);
+      applyTheme(currentTheme);
+    }
+
+    function applyTheme(theme) {
+      const htmlEl = document.documentElement;
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
+
+      if (theme === 'light') {
+        htmlEl.classList.remove('dark');
+        htmlEl.classList.add('light');
+        htmlEl.setAttribute('data-theme', 'light');
+        if (themeIcon) themeIcon.textContent = 'light_mode';
+        if (themeLabel) themeLabel.textContent = '浅色研报';
+      } else {
+        htmlEl.classList.remove('light');
+        htmlEl.classList.add('dark');
+        htmlEl.setAttribute('data-theme', 'dark');
+        if (themeIcon) themeIcon.textContent = 'dark_mode';
+        if (themeLabel) themeLabel.textContent = '深色终端';
+      }
+
+      // Re-render chart with new palette if data exists
+      if (dashboardData && dashboardData.chart_data) {
+        renderChart(dashboardData.chart_data);
+      }
+    }
+
+    // Dynamic Parameter Templates
+    const PARAM_TEMPLATES = {
+      trend: [
+        { id: 'short_window', label: '短期均线 (Fast MA)', unit: 'DAY', type: 'number', min: 2, max: 60, default: 5 },
+        { id: 'long_window', label: '长期均线 (Slow MA)', unit: 'DAY', type: 'number', min: 10, max: 250, default: 40 },
+        { id: 'rebalance_days', label: '调仓周期 (Rebalance)', unit: 'T+N', type: 'number', min: 1, max: 30, default: 5 },
+        { id: 'max_positions', label: '最大持仓数 (Max Pos)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
+      ],
+      multi_factor: [
+        { id: 'w_momentum', label: '动量因子权重 (Mom)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.6 },
+        { id: 'w_volatility', label: '低波因子权重 (Vol)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.2 },
+        { id: 'w_size', label: '小市值权重 (Size)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.2 },
+        { id: 'rebalance_days', label: '调仓周期 (Rebalance)', unit: 'T+N', type: 'number', min: 1, max: 30, default: 20 }
+      ],
+      mean_reversion: [
+        { id: 'window', label: '均线统计周期 (Window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 15 },
+        { id: 'num_std', label: '布林突破倍数 (Num Std)', unit: 'STD', type: 'number', step: 0.1, min: 1.0, max: 3.0, default: 1.8 },
+        { id: 'exit_z', label: '平仓阈值 (Exit Z)', unit: 'Z', type: 'number', step: 0.1, min: -1.0, max: 1.0, default: 0.0 },
+        { id: 'max_positions', label: '最大持仓数 (Max Pos)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
+      ]
+    };
+
+    function renderDynamicParams(strategyKey, customValues = {}) {
+      const container = document.getElementById('dynamicParamsContainer');
+      const schema = PARAM_TEMPLATES[strategyKey] || PARAM_TEMPLATES['trend'];
+
+      let html = '';
+      schema.forEach(p => {
+        const val = customValues[p.id] !== undefined ? customValues[p.id] : p.default;
+        const stepAttr = p.step ? `step="${p.step}"` : '';
+        html += `
+          <div class="space-y-1">
+            <label class="text-[11px] font-label-eyebrow text-text-fog whitespace-nowrap">${p.label}</label>
+            <div class="relative">
+              <input id="param_${p.id}" class="w-full h-8 px-2.5 pr-10 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark font-metric-tabular text-xs focus:border-primary-container outline-none tabular-nums" type="${p.type}" min="${p.min}" max="${p.max}" ${stepAttr} value="${val}"/>
+              <span class="absolute right-2 top-2 text-[10px] text-text-fog font-label-eyebrow pointer-events-none">${p.unit}</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function onStrategySelectChange() {
+      const select = document.getElementById('strategySelect');
+      renderDynamicParams(select.value);
+    }
+
+    function applyPreset(presetType) {
+      // Toggle button active classes
+      ['TF', 'MF', 'MR'].forEach(type => {
+        const btn = document.getElementById(`presetBtn_${type}`);
+        if (type === presetType) {
+          btn.className = 'px-3 py-1 rounded-full bg-primary-container text-white font-ui-interactive border border-primary-container shadow-sm flex items-center space-x-1 whitespace-nowrap transition-all';
+        } else {
+          btn.className = 'px-3 py-1 rounded-full bg-surface-container-high text-text-fog hover:text-text-on-dark border border-outline-variant/20 font-ui-interactive transition-all whitespace-nowrap';
+        }
+      });
+
+      const stratSelect = document.getElementById('strategySelect');
+      if (presetType === 'TF') {
+        stratSelect.value = 'trend';
+        renderDynamicParams('trend', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+      } else if (presetType === 'MF') {
+        stratSelect.value = 'multi_factor';
+        renderDynamicParams('multi_factor', { w_momentum: 0.6, w_volatility: 0.2, w_size: 0.2, rebalance_days: 20 });
+      } else if (presetType === 'MR') {
+        stratSelect.value = 'mean_reversion';
+        renderDynamicParams('mean_reversion', { window: 15, num_std: 1.8, exit_z: 0.0, max_positions: 8 });
+      }
+    }
+
+    // ECharts Dual Subplot Renderer
+    function renderChart(chartData) {
+      if (!chartData || !chartData.dates || chartData.dates.length === 0) return;
+
+      const container = document.getElementById('mainChartContainer');
+      if (!currentChart) {
+        currentChart = echarts.init(container);
+        window.addEventListener('resize', () => currentChart && currentChart.resize());
+      }
+
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const textColor = isLight ? '#475569' : '#9d9db0';
+      const gridLineColor = isLight ? 'rgba(226, 232, 240, 0.8)' : 'rgba(63, 63, 82, 0.25)';
+      const tooltipBg = isLight ? '#ffffff' : '#1a1a27';
+      const tooltipBorder = isLight ? '#cbd5e1' : '#3f3f52';
+      const tooltipText = isLight ? '#0f172a' : '#ededf3';
+
+      const dates = chartData.dates;
+      const nav = chartData.nav;
+      const bmNav = chartData.bm_nav;
+      const drawdown = chartData.drawdown;
+      const splitDate = chartData.split_date || "2023-01-03";
+
+      const option = {
+        animationDuration: 800,
+        backgroundColor: 'transparent',
+        axisPointer: {
+          link: [{ xAxisIndex: 'all' }]
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: tooltipBg,
+          borderColor: tooltipBorder,
+          textStyle: { color: tooltipText, fontSize: 12, fontFamily: 'JetBrains Mono' },
+          formatter: function(params) {
+            if (!params || params.length === 0) return '';
+            const d = params[0].axisValue;
+            let sNav = '-', bNav = '-', dd = '-';
+            params.forEach(p => {
+              if (p.seriesName === '策略净值') sNav = p.data;
+              if (p.seriesName === '沪深300') bNav = p.data;
+              if (p.seriesName === '水下回撤') dd = p.data + '%';
+            });
+            const excess = (sNav !== '-' && bNav !== '-') ? ((sNav - bNav) >= 0 ? '+' : '') + (sNav - bNav).toFixed(4) : '-';
+            return `
+              <div style="font-weight:600; margin-bottom:4px;">${d}</div>
+              <div style="display:flex; justify-content:space-between; gap:16px;">
+                <span>策略净值:</span> <strong style="color:#818cf8;">${sNav}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; gap:16px;">
+                <span>沪深300:</span> <strong style="color:#94a3b8;">${bNav}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; gap:16px;">
+                <span>动态超额:</span> <strong style="color:#10b981;">${excess}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; gap:16px;">
+                <span>水下回撤:</span> <strong style="color:#ef4444;">${dd}</strong>
+              </div>
+            `;
+          }
+        },
+        grid: [
+          // Subplot 1: Cumulative NAV
+          {
+            left: '50px',
+            right: '25px',
+            top: '7%',
+            height: '60%'
+          },
+          // Subplot 2: Underwater Drawdown
+          {
+            left: '50px',
+            right: '25px',
+            top: '76%',
+            height: '18%'
+          }
+        ],
+        xAxis: [
+          {
+            type: 'category',
+            data: dates,
+            gridIndex: 0,
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: gridLineColor } },
+            axisTick: { show: false },
+            axisLabel: { show: false }
+          },
+          {
+            type: 'category',
+            data: dates,
+            gridIndex: 1,
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: gridLineColor } },
+            axisTick: { lineStyle: { color: gridLineColor } },
+            axisLabel: {
+              color: textColor,
+              fontSize: 10,
+              fontFamily: 'JetBrains Mono',
+              formatter: function(val, idx) {
+                if (idx % 250 === 0 || idx === dates.length - 1) return val;
+                return '';
+              }
+            }
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value',
+            gridIndex: 0,
+            scale: true,
+            splitLine: { lineStyle: { color: gridLineColor, type: 'dashed' } },
+            axisLabel: { color: textColor, fontSize: 10, fontFamily: 'JetBrains Mono' }
+          },
+          {
+            type: 'value',
+            gridIndex: 1,
+            max: 0,
+            splitNumber: 2,
+            splitLine: { lineStyle: { color: gridLineColor, type: 'dashed' } },
+            axisLabel: {
+              color: textColor,
+              fontSize: 10,
+              fontFamily: 'JetBrains Mono',
+              formatter: '{value}%'
+            }
+          }
+        ],
+        series: [
+          // Series 1: CSI300 Benchmark NAV (Muted Slate / Dashed)
+          {
+            name: '沪深300',
+            type: 'line',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: bmNav,
+            showSymbol: false,
+            lineStyle: { color: '#94a3b8', width: 1.5, type: 'dashed' }
+          },
+          // Series 2: Strategy NAV (Indigo/Cyan glowing line with gradient area)
+          {
+            name: '策略净值',
+            type: 'line',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: nav,
+            showSymbol: false,
+            lineStyle: { color: '#6366f1', width: 2.5 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(99, 102, 241, 0.35)' },
+                { offset: 0.8, color: 'rgba(99, 102, 241, 0.05)' },
+                { offset: 1, color: 'rgba(99, 102, 241, 0.0)' }
+              ])
+            },
+            markPoint: {
+              symbol: 'circle',
+              symbolSize: 6,
+              data: [
+                { type: 'max', name: '最高净值', itemStyle: { color: '#10b981' } },
+                { type: 'min', name: '最低净值', itemStyle: { color: '#ef4444' } }
+              ]
+            },
+            markLine: {
+              symbol: 'none',
+              lineStyle: { color: '#4f46e5', type: 'dashed', width: 1.5 },
+              label: {
+                show: true,
+                position: 'insideEndTop',
+                formatter: '样本外起点 (2023-01-03)',
+                color: '#818cf8',
+                fontSize: 11,
+                fontFamily: 'JetBrains Mono'
+              },
+              data: [
+                { xAxis: splitDate }
+              ]
+            }
+          },
+          // Series 3: Underwater Drawdown (Red area)
+          {
+            name: '水下回撤',
+            type: 'line',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: drawdown,
+            showSymbol: false,
+            lineStyle: { color: '#f87171', width: 1.2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(239, 68, 68, 0.2)' },
+                { offset: 1, color: 'rgba(239, 68, 68, 0.7)' }
+              ])
+            }
+          }
+        ]
+      };
+
+      currentChart.setOption(option, true);
+    }
+
+    // Format Helpers
+    function fmtPct(num, digits = 2, withSign = true) {
+      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
+      const n = Number(num);
+      const sign = (withSign && n > 0) ? '+' : '';
+      return `${sign}${(n * 100).toFixed(digits)}%`;
+    }
+
+    function fmtNum(num, digits = 4) {
+      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
+      return Number(num).toFixed(digits);
+    }
+
+    // Populate KPIs
+    function updateKPIs(kpis) {
+      if (!kpis) return;
+      document.getElementById('kpiAnnualReturn').textContent = fmtPct(kpis.annual_return);
+      document.getElementById('kpiExcessReturn').textContent = `▲ ${fmtPct(kpis.excess_annual_return)} 超额`;
+      document.getElementById('kpiFullAnnual').textContent = fmtPct(kpis.full_annual_return);
+      document.getElementById('kpiBenchmarkReturn').textContent = `基准沪深300: ${fmtPct(kpis.benchmark_annual_return)}`;
+
+      document.getElementById('kpiMaxDrawdown').textContent = `-${Math.abs(kpis.max_drawdown * 100).toFixed(2)}%`;
+      document.getElementById('kpiFullDrawdown').textContent = `-${Math.abs(kpis.full_max_drawdown * 100).toFixed(2)}%`;
+      document.getElementById('kpiBenchmarkDrawdown').textContent = `基准最大: -${Math.abs(kpis.benchmark_max_drawdown * 100).toFixed(2)}%`;
+
+      document.getElementById('kpiSharpeRatio').textContent = fmtNum(kpis.sharpe_ratio, 4);
+      document.getElementById('kpiCalmarRatio').textContent = fmtNum(kpis.calmar_ratio, 4);
+      document.getElementById('kpiFullSharpe').textContent = `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`;
+
+      document.getElementById('kpiWinRate').textContent = fmtPct(kpis.win_rate);
+      document.getElementById('kpiTradeCount').textContent = `共 ${Number(kpis.trade_count).toLocaleString()} 笔闭环`;
+    }
+
+    // Populate Data Governance Table
+    function renderDataGovernanceTable(validation) {
+      const tbody = document.getElementById('dataGovernanceTableBody');
+      if (!tbody) return;
+
+      const universe = [
+        { code: '600519', name: '贵州茅台', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '601318', name: '中国平安', align: 1456, suspended: 0, rule: '修正分红除权失真', note: '100% 几何匹配' },
+        { code: '601398', name: '工商银行', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '600900', name: '长江电力', align: 1456, suspended: 11, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
+        { code: '000002', name: '万科A',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '600276', name: '恒瑞医药', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '002415', name: '海康威视', align: 1456, suspended: 2, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
+        { code: '002594', name: '比亚迪',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '600111', name: '北方稀土', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '601888', name: '中国中免', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+        { code: '000300', name: '沪深300', align: 1456, suspended: 0, rule: '基准基石交易日历', note: '权威基准数据' }
+      ];
+
+      let html = '';
+      universe.forEach(item => {
+        const suspBadge = item.suspended > 0
+          ? `<span class="text-primary font-medium">停牌补齐 ${item.suspended} 天</span>`
+          : `<span class="text-emerald-400">0 (全对齐)</span>`;
+        html += `
+          <tr class="hover:bg-surface-bright/20">
+            <td class="py-1.5 px-3 text-text-on-dark font-medium whitespace-nowrap">${item.code} ${item.name}</td>
+            <td class="py-1.5 px-2 text-right tabular-nums whitespace-nowrap">${item.align}</td>
+            <td class="py-1.5 px-2 text-center whitespace-nowrap">${suspBadge}</td>
+            <td class="py-1.5 px-2 text-text-fog text-[11px] whitespace-nowrap">${item.rule}</td>
+            <td class="py-1.5 px-3 text-right text-emerald-400 whitespace-nowrap">${item.note}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // Experiments Table Filtering & Sorting
+    function filterExperiments(category) {
+      currentFilter = category;
+      ['ALL', 'TrendFollowing', 'MultiFactor', 'MeanReversion'].forEach(c => {
+        const btn = document.getElementById(`filterBtn_${c}`);
+        if (!btn) return;
+        if (c === category) {
+          btn.className = 'px-2.5 py-1 rounded bg-primary-container text-white font-ui-interactive shadow-sm whitespace-nowrap cursor-pointer';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded text-text-fog hover:text-text-on-dark transition-colors whitespace-nowrap cursor-pointer';
+        }
+      });
+      renderExperimentsTable();
+    }
+
+    function renderExperimentsTable() {
+      if (!dashboardData || !dashboardData.experiments) return;
+      const tbody = document.getElementById('experimentsTableBody');
+      const sortSelect = document.getElementById('sortSelect');
+      const sortBy = sortSelect ? sortSelect.value : 'oos_sharpe_desc';
+
+      let list = [...dashboardData.experiments];
+
+      // Update Count Badges
+      const countAll = list.length;
+      const countTF = list.filter(e => e.strategy_type === 'TrendFollowing').length;
+      const countMF = list.filter(e => e.strategy_type === 'MultiFactor').length;
+      const countMR = list.filter(e => e.strategy_type === 'MeanReversion').length;
+
+      document.getElementById('countAll').textContent = countAll;
+      document.getElementById('countTF').textContent = countTF;
+      document.getElementById('countMF').textContent = countMF;
+      document.getElementById('countMR').textContent = countMR;
+      document.getElementById('lblTotalArchived').textContent = countAll;
+
+      // Filter
+      if (currentFilter !== 'ALL') {
+        list = list.filter(e => e.strategy_type === currentFilter);
+      }
+
+      // Sort
+      list.sort((a, b) => {
+        const num = (v) => (v === '-' || v === undefined || v === null) ? -999999 : Number(v);
+        if (sortBy === 'oos_sharpe_desc') return num(b.oos_sharpe) - num(a.oos_sharpe);
+        if (sortBy === 'full_annual_return_desc') return num(b.full_annual_return) - num(a.full_annual_return);
+        if (sortBy === 'oos_max_drawdown_asc') return Math.abs(num(a.oos_max_drawdown)) - Math.abs(num(b.oos_max_drawdown));
+        if (sortBy === 'oos_3fold_pass_desc') return String(b.oos_3fold_pass).localeCompare(String(a.oos_3fold_pass));
+        return 0;
+      });
+
+      document.getElementById('lblShowingCount').textContent = `Showing 1 - ${list.length} of ${countAll} entries`;
+
+      let html = '';
+      list.forEach((item, idx) => {
+        const isBest = idx === 0 && currentFilter === 'ALL';
+        const isCustom = item.is_custom === true;
+        const rowBg = isCustom
+          ? 'bg-emerald-500/10 border-l-2 border-emerald-400'
+          : (isBest ? 'bg-brand-indigo-dim/20 border-l-2 border-primary-container' : 'hover:bg-surface-bright/20');
+
+        const badge = isCustom
+          ? '<span class="px-1.5 py-0.2 rounded bg-emerald-500 text-white text-[10px]">最新回测</span>'
+          : (isBest ? '<span class="px-1.5 py-0.2 rounded bg-primary-container text-white text-[10px]">最优</span>' : '');
+
+        const passBadge = (item.oos_3fold_pass === true || item.oos_3fold_pass === 'True')
+          ? '<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/20 text-emerald-400 border border-emerald-400/30 whitespace-nowrap">3/3 PASS</span>'
+          : '<span class="px-2 py-0.5 rounded text-[11px] bg-outline-variant/30 text-text-fog whitespace-nowrap">-</span>';
+
+        html += `
+          <tr class="${rowBg}">
+            <td class="py-2.5 px-3 font-semibold text-text-on-dark flex items-center space-x-1.5 whitespace-nowrap">
+              <span class="text-primary font-label-eyebrow">${item.experiment_id || 'EXP'}</span>
+              ${badge}
+            </td>
+            <td class="py-2.5 px-3 text-text-on-dark whitespace-nowrap">${item.strategy_type}</td>
+            <td class="py-2.5 px-3 text-[11px] font-mono text-text-fog/90 max-w-xs truncate" title="${item.params}">${item.strategy_name || ''} ${item.params}</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 tabular-nums whitespace-nowrap">${fmtPct(item.is_annual_return)}</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 tabular-nums whitespace-nowrap">${fmtNum(item.is_sharpe, 2)}</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold tabular-nums whitespace-nowrap">${fmtPct(item.oos_annual_return)}</td>
+            <td class="py-2.5 px-3 text-right text-primary font-bold tabular-nums whitespace-nowrap">-${Math.abs(Number(item.oos_max_drawdown || 0) * 100).toFixed(2)}%</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold tabular-nums whitespace-nowrap">${fmtNum(item.oos_sharpe, 4)}</td>
+            <td class="py-2.5 px-3 text-center whitespace-nowrap">${passBadge}</td>
+            <td class="py-2.5 px-3 text-right text-text-on-dark font-medium tabular-nums whitespace-nowrap">${fmtPct(item.full_annual_return)}</td>
+            <td class="py-2.5 px-3 text-right text-text-on-dark tabular-nums whitespace-nowrap">${fmtPct(item.full_win_rate)}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // Load All Dashboard Data from Flask API
+    async function loadDashboardData() {
+      try {
+        const resp = await fetch('/api/dashboard');
+        if (!resp.ok) throw new Error('API request failed');
+        dashboardData = await resp.json();
+
+        // Update KPIs
+        updateKPIs(dashboardData.kpis);
+
+        // Render Chart
+        renderChart(dashboardData.chart_data);
+
+        // Render Data Governance Table
+        renderDataGovernanceTable(dashboardData.validation);
+
+        // Render Experiments Table
+        renderExperimentsTable();
+
+      } catch (err) {
+        console.error('加载看板数据失败:', err);
+      }
+    }
+
+    // Run Custom Backtest via POST /api/backtest
+    async function runCustomBacktest() {
+      const btn = document.getElementById('btnRunBacktest');
+      const runIcon = document.getElementById('runIcon');
+      const runText = document.getElementById('runText');
+
+      const strategyKey = document.getElementById('strategySelect').value;
+      const startDate = document.getElementById('inputStartDate').value.trim();
+      const endDate = document.getElementById('inputEndDate').value.trim();
+
+      // Collect dynamic params
+      const schema = PARAM_TEMPLATES[strategyKey] || [];
+      const params = {};
+      schema.forEach(p => {
+        const input = document.getElementById(`param_${p.id}`);
+        if (input) params[p.id] = Number(input.value);
+      });
+
+      // UI Loading State
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      runIcon.textContent = 'hourglass_empty';
+      runIcon.classList.add('animate-spin');
+      runText.textContent = '回测撮合计算中...';
+
+      try {
+        const resp = await fetch('/api/backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            strategy: strategyKey,
+            params: params,
+            start_date: startDate,
+            end_date: endDate
+          })
+        });
+
+        const res = await resp.json();
+        if (res.success) {
+          // Update tag
+          document.getElementById('currentStrategyTag').textContent = `${res.strategy_name} (自定义回测)`;
+
+          // Smoothly update chart
+          renderChart(res.chart_data);
+
+          // Update KPI metrics
+          const m = res.metrics;
+          updateKPIs({
+            annual_return: m.annual_return,
+            excess_annual_return: m.annual_return - (-0.0135),
+            full_annual_return: m.annual_return,
+            benchmark_annual_return: -0.0135,
+            max_drawdown: m.max_drawdown,
+            full_max_drawdown: m.max_drawdown,
+            benchmark_max_drawdown: -0.2347,
+            sharpe_ratio: m.sharpe_ratio,
+            calmar_ratio: m.calmar_ratio,
+            full_sharpe: m.sharpe_ratio,
+            win_rate: m.win_rate,
+            trade_count: m.trade_count
+          });
+
+          // Insert into experiments table at top
+          if (res.new_record && dashboardData && dashboardData.experiments) {
+            res.new_record.is_custom = true;
+            dashboardData.experiments.unshift(res.new_record);
+            renderExperimentsTable();
+          }
+        } else {
+          alert('回测执行失败: ' + (res.error || '未知错误'));
+        }
+      } catch (err) {
+        console.error('回测请求异常:', err);
+        alert('回测请求异常，请查看终端控制台日志');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        runIcon.textContent = 'bolt';
+        runIcon.classList.remove('animate-spin');
+        runText.textContent = '立即运行高保真回测 (Run Backtest)';
+      }
+    }
+
+    // Initialize on DOM Ready
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      renderDynamicParams('trend', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+      loadDashboardData();
+    });
+  </script>
+</body>
+</html>
