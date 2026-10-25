@@ -8,7 +8,9 @@
 - **当前协作模式**：分层协作模式（高级模型顶层规划；Antigravity 次级实施 AI 严格对齐落地 Phase 0 ~ Phase 5 全套交付件）
 - **项目截止时间**：2026 年 11 月 3 日 22:00（FTP 压缩包上传，根目录直接打包且必须包含 `.git`、清洗后 `data/`、`strategy/strategy.json`、`records/对比结果.csv`）
 - **Phase 5 最终收官与交付成果**：
-  - **可视化终端精修与双主题**：完成 `templates/index.html` 像素级排版对齐与防折行超框优化；顶栏实现「🌙 深色终端 / ☀️ 浅色研报」一键无缝双主题切换；布局采用 Grid 等高拉伸（`items-stretch`），杜绝白底白字与容器错位。
+  - **可视化终端精修与双主题**：完成 `templates/index.html` 像素级排版对齐与防折行超框优化；顶栏实现「🌙 深色终端 / ☀️ 浅色研报」一键无缝双主题切换；布局采用 Grid 等高拉伸（`items-stretch`），彻底清除浅色模式所有深色容器残框（导航胶囊、三折卡片、黄色预警 Banner、输入框、下拉框与表格全量语义化配色修复）。
+  - **数据治理表格首行防遮挡**：重构 `.sticky-table` 表头为实心不透明背景（深色 `#161b26` / 浅色 `#f1f5f9`），设置 `border-collapse: separate; border-spacing: 0;` 并规范表头内边距，彻底解决首行（万科A/贵州茅台）被表头遮挡的问题。
+  - **Windows 中文字体回退根治**：彻底消除将中文元素赋予 `font-mono` / `font-metric-tabular` 导致的 Windows DirectWrite 回退至点阵新宋体（NSimSun）发虚发涩缺陷。确立全局界面中文字体栈为 `-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif !important;`，仅对纯数值与代码（`.num, code, .font-mono-num`）精准启用 `JetBrains Mono` 等宽字体。
   - **离线 ECharts 双子图交互**：引入本地离线 `static/echarts.min.js`（1,029,203 bytes），实现策略累积净值曲线（带 2023-01-03 样本外分界纵线、极值标注与面积渐变）+ 沪深300基准对比虚线 + 水下动态回撤面积子图（0.00% 至 -28.55%），多指标联动浮窗与窗口 resize 自适应。
   - **后端真实 API 全打通**：`app.py` 提供 `GET /api/dashboard`、`POST /api/backtest`、`GET /api/export_csv`。前端直连真实回测引擎，支持参数实时表单提交、秒级高保真撮合重算并动态更新曲线与 68 组实验库首行。
   - **全套交付文件与脚本**：
