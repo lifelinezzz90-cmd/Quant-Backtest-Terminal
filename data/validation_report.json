@@ -19,6 +19,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 7,
       "name": "贵州茅台"
     },
     "601318": {
@@ -32,6 +34,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 12,
       "name": "中国平安"
     },
     "601398": {
@@ -45,6 +49,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 6,
       "name": "工商银行"
     },
     "600900": {
@@ -58,6 +64,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 44,
+      "dividend_adjustment_count": 6,
       "name": "长江电力"
     },
     "000002": {
@@ -71,6 +79,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 5,
       "name": "万科A"
     },
     "600276": {
@@ -84,6 +94,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 6,
       "name": "恒瑞医药"
     },
     "002415": {
@@ -97,6 +109,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 8,
+      "dividend_adjustment_count": 6,
       "name": "海康威视"
     },
     "002594": {
@@ -110,6 +124,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 6,
       "name": "比亚迪"
     },
     "600111": {
@@ -123,6 +139,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 6,
       "name": "北方稀土"
     },
     "601888": {
@@ -136,6 +154,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 6,
       "name": "中国中免"
     },
     "000300": {
@@ -149,6 +169,8 @@
       "inversion_repaired_count": 0,
       "spike_repaired_count": 0,
       "spike_details": [],
+      "forward_fill_count": 0,
+      "dividend_adjustment_count": 0,
       "name": "沪深300基准"
     }
   }

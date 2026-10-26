@@ -38,6 +38,7 @@ venv.bak/
 # IDE and Editor configurations
 .idea/
 .vscode/
+.workbuddy-ai/
 *.swp
 *.swo
 *~

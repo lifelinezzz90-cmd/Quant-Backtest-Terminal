@@ -43,7 +43,13 @@ def _zscore_cross_sectional(series_values: np.ndarray) -> np.ndarray:
 
 class MultiFactorStrategy(BaseStrategy):
     """
-    多因子加权打分选股策略
+    多因子加权打分选股策略 (100% 真实量价因子，零随机噪声)
+    三因子架构：
+    1. 动量因子 (Momentum): 过去 mom_window 日收益率 (越高越好)
+    2. 低波因子 (Low Volatility): 过去 vol_window 日日收益率标准差的负值 (波动越低越好)
+    3. 量价反转与成交量稳定性因子 (Volume-Price Reversal / Volume Stability):
+       - 默认基于真实行情计算：短期价格反转 (rev_window 日收益率负值) 与成交量波动率稳定性负向加权；
+       - 若用户显式放入外部真实舆情 CSV (data/raw/sentiment_scores.csv)，则平滑切换为外部舆情覆盖。
     """
 
     def __init__(
@@ -55,6 +61,7 @@ class MultiFactorStrategy(BaseStrategy):
         momentum_weight: float = 1.0,
         volatility_weight: float = 1.0,
         sentiment_weight: float = 0.5,
+        reversal_weight: Optional[float] = None,
         top_k: int = 8,
         top_n: Optional[int] = None,
         rebalance_days: int = 10,
@@ -66,6 +73,7 @@ class MultiFactorStrategy(BaseStrategy):
         actual_top = top_n if top_n is not None else top_k
         actual_mom = lookback_days if lookback_days is not None else mom_window
         actual_vol = lookback_days if lookback_days is not None else vol_window
+        raw_rev_w = reversal_weight if reversal_weight is not None else sentiment_weight
 
         if params:
             if "lookback_days" in params:
@@ -73,6 +81,10 @@ class MultiFactorStrategy(BaseStrategy):
                 actual_vol = int(params["lookback_days"])
             if "top_n" in params:
                 actual_top = int(params["top_n"])
+            if "reversal_weight" in params:
+                raw_rev_w = float(params["reversal_weight"])
+            elif "sentiment_weight" in params:
+                raw_rev_w = float(params["sentiment_weight"])
 
         p = {
             "mom_window": int(params.get("mom_window", actual_mom)) if params else actual_mom,
@@ -80,7 +92,8 @@ class MultiFactorStrategy(BaseStrategy):
             "rev_window": int(params.get("rev_window", rev_window)) if params else rev_window,
             "momentum_weight": float(params.get("momentum_weight", momentum_weight)) if params else momentum_weight,
             "volatility_weight": float(params.get("volatility_weight", volatility_weight)) if params else volatility_weight,
-            "sentiment_weight": float(params.get("sentiment_weight", sentiment_weight)) if params else sentiment_weight,
+            "sentiment_weight": float(raw_rev_w),
+            "reversal_weight": float(raw_rev_w),
             "top_k": int(params.get("top_k", actual_top)) if params else actual_top,
             "rebalance_days": int(params.get("rebalance_days", rebalance_days)) if params else rebalance_days,
             "use_sentiment": bool(params.get("use_sentiment", use_sentiment)) if params else use_sentiment,
@@ -97,6 +110,7 @@ class MultiFactorStrategy(BaseStrategy):
         self.momentum_weight = p["momentum_weight"]
         self.volatility_weight = p["volatility_weight"]
         self.sentiment_weight = p["sentiment_weight"]
+        self.reversal_weight = p["reversal_weight"]
         self.top_k = p["top_k"]
         self.rebalance_days = p["rebalance_days"]
         self.use_sentiment = p["use_sentiment"]
@@ -142,18 +156,24 @@ class MultiFactorStrategy(BaseStrategy):
         mom_raw = np.full((n_days, n_stocks), np.nan)
         vol_raw = np.full((n_days, n_stocks), np.nan)
         rev_raw = np.full((n_days, n_stocks), np.nan)
+        vol_stab_raw = np.full((n_days, n_stocks), np.nan)
 
         for col_idx, code in enumerate(stock_codes):
             df = data_dict[code]
             close_s = df["close"]
+            volume_s = df["volume"] if "volume" in df.columns else pd.Series(np.ones(n_days))
             # 动量因子: 过去 mom_window 日收益率
             mom_raw[:, col_idx] = close_s.pct_change(periods=self.mom_window).values
             # 低波因子: 过去 vol_window 日收益率波动率的负值 (波动越低越好)
             vol_raw[:, col_idx] = -close_s.pct_change().rolling(window=self.vol_window, min_periods=self.vol_window).std().values
             # 短期反转因子: 过去 rev_window 日收益率的负值
             rev_raw[:, col_idx] = -close_s.pct_change(periods=self.rev_window).values
+            # 成交量稳定性因子: 过去 vol_window 日成交量变异系数的负值 (量能越平稳得分越高)
+            vol_roll_mean = volume_s.rolling(window=self.vol_window, min_periods=self.vol_window).mean()
+            vol_roll_std = volume_s.rolling(window=self.vol_window, min_periods=self.vol_window).std()
+            vol_stab_raw[:, col_idx] = -(vol_roll_std / (vol_roll_mean + 1e-8)).values
 
-        # 加载舆情情感因子
+        # 加载外部真实舆情情感因子 (仅当存在时加载，绝不使用随机数伪造)
         sent_df = self._load_sentiment_pivot(date_list, stock_codes) if self.use_sentiment else None
         sent_raw = sent_df.values if sent_df is not None else None
 
@@ -168,16 +188,20 @@ class MultiFactorStrategy(BaseStrategy):
                 z_mom = _zscore_cross_sectional(mom_raw[t, :])
                 z_vol = _zscore_cross_sectional(vol_raw[t, :])
                 z_rev = _zscore_cross_sectional(rev_raw[t, :])
+                z_vstab = _zscore_cross_sectional(vol_stab_raw[t, :])
+
+                # 第三因子：优先使用真实量价反转与成交量稳定性因子 (100% 真实行情，零随机数)
+                # 仅当用户显式放入外部真实舆情 CSV 时才平滑切换为外部数据覆盖
+                if sent_raw is not None and t < len(sent_raw):
+                    z_third = _zscore_cross_sectional(sent_raw[t, :])
+                else:
+                    z_third = 0.5 * z_rev + 0.5 * z_vstab
 
                 composite_score = (
                     self.momentum_weight * z_mom +
                     self.volatility_weight * z_vol +
-                    0.5 * z_rev
+                    self.sentiment_weight * z_third
                 )
-
-                if sent_raw is not None and t < len(sent_raw) and self.sentiment_weight > 0:
-                    z_sent = _zscore_cross_sectional(sent_raw[t, :])
-                    composite_score += self.sentiment_weight * z_sent
 
                 # 排除缺失因子数据的标的 (如处于预热期)
                 has_factor = ~(np.isnan(mom_raw[t, :]) | np.isnan(vol_raw[t, :]))

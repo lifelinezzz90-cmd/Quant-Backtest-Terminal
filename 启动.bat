@@ -27,9 +27,9 @@ if not exist "strategy\strategy.json" (
 )
 echo.
 
-:: 3. 启动 Web 可视化看板并自动唤起浏览器
+:: 3. 启动 Web 可视化看板并延时唤起浏览器 (避免服务未就绪导致 ERR_CONNECTION_REFUSED)
 echo [3/3] 正在启动 Web 看板服务 (http://127.0.0.1:5000)...
-start "" "http://127.0.0.1:5000"
+start "" /b cmd /c "timeout /t 2 /nobreak >nul && start http://127.0.0.1:5000"
 echo.
 echo ==============================================================================
 echo 服务已成功启动！请在浏览器中查看交互看板。

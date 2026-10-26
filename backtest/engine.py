@@ -107,6 +107,29 @@ def load_cleaned_data(sample: bool = False,
     if benchmark_df is None:
         raise FileNotFoundError(f"未找到基准文件 {BENCHMARK_CODE}.csv，请检查数据目录！")
 
+    # 强制以基准 000300 的日期序列为标准日历，对每只股票执行日历自动对齐 (修复 B7)
+    bm_calendar = benchmark_df["date"].drop_duplicates().sort_values().tolist()
+    cal_df = pd.DataFrame({"date": bm_calendar})
+
+    for code, df in list(stock_dict.items()):
+        merged = pd.merge(cal_df, df, on="date", how="left")
+        # 前收盘价前向填充
+        for col in ["open", "high", "low", "close"]:
+            if col in merged.columns:
+                merged[col] = merged[col].ffill().bfill()
+        merged["volume"] = merged["volume"].fillna(0.0)
+        merged["amount"] = (merged["close"] * merged["volume"]).round(2)
+        # 缺失或成交量为0即视为停牌
+        is_susp = (merged["volume"] <= 0.0) | merged.get("is_suspended", pd.Series([False]*len(merged))).fillna(True)
+        merged["is_suspended"] = is_susp.astype(bool)
+
+        # 基于前复权与 9.85% 阈值重构涨跌停列 (修复 Major 6)
+        prev_close = merged["close"].shift(1).bfill()
+        merged["prev_close"] = prev_close
+        merged["up_limit"] = (prev_close * 1.0985).round(4)
+        merged["down_limit"] = (prev_close * 0.9015).round(4)
+        stock_dict[code] = merged.sort_values("date").reset_index(drop=True)
+
     return stock_dict, benchmark_df
 
 
@@ -253,6 +276,8 @@ class BacktestEngine:
                 buy_orders: List[Tuple[str, float, float, float]] = []   # (code, target_val, target_w, curr_w)
 
                 for code in data_dict.keys():
+                    if code not in current_bar:
+                        continue
                     target_w = float(target_row.get(code, 0.0))
                     prev_w = float(prev_target_weights.get(code, 0.0))
                     curr_shares = positions[code]["total_shares"]
@@ -281,13 +306,24 @@ class BacktestEngine:
                 # (C) 先卖后买：执行卖单释放流动性
                 # -------------------------------------------------------------
                 for code, req_shares, target_w, prev_w in sell_orders:
+                    if code not in current_bar:
+                        continue
                     bar = current_bar[code]
                     open_p = bar["open"]
-                    down_l = bar["down_limit"]
+                    down_l = bar.get("down_limit", bar.get("prev_close", open_p) * 0.9015)
                     pos = positions[code]
 
+                    # 显式 T+1 锁仓校验 (当日买入不可当日卖出)
+                    if pos.get("last_buy_date") == current_date:
+                        pending_rebalance[code] = True
+                        rejects_list.append({
+                            "date": current_date, "code": code, "action": "SELL",
+                            "price": open_p, "reason": "T_PLUS_1_LOCKED", "requested_shares": req_shares
+                        })
+                        continue
+
                     # 停牌拦截
-                    if bar["is_suspended"] or bar["volume"] <= 0:
+                    if bar.get("is_suspended", False) or bar.get("volume", 0) <= 0:
                         pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "SELL",
@@ -295,8 +331,12 @@ class BacktestEngine:
                         })
                         continue
 
-                    # 跌停拦截：开盘一字跌停或低于跌停价，无法卖出
-                    if open_p <= down_l:
+                    # 跌停拦截：开盘一字跌停或低于跌停价 (跌幅 <= -9.85%)，无法卖出
+                    is_limit_down = (open_p <= down_l)
+                    if not is_limit_down and "prev_close" in bar and bar["prev_close"] > 0:
+                        is_limit_down = (open_p <= bar["prev_close"] * 0.9015)
+
+                    if is_limit_down:
                         pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "SELL",
@@ -353,13 +393,15 @@ class BacktestEngine:
                 # (D) 再执行买单：使用释放后的可用资金建仓或加仓
                 # -------------------------------------------------------------
                 for code, val_to_buy, target_w, prev_w in buy_orders:
+                    if code not in current_bar:
+                        continue
                     bar = current_bar[code]
                     open_p = bar["open"]
-                    up_l = bar["up_limit"]
+                    up_l = bar.get("up_limit", bar.get("prev_close", open_p) * 1.0985)
                     pos = positions[code]
 
                     # 停牌拦截
-                    if bar["is_suspended"] or bar["volume"] <= 0:
+                    if bar.get("is_suspended", False) or bar.get("volume", 0) <= 0:
                         pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "BUY",
@@ -367,8 +409,12 @@ class BacktestEngine:
                         })
                         continue
 
-                    # 涨停拦截：开盘一字涨停或达到涨停价，无法买入
-                    if open_p >= up_l:
+                    # 涨停拦截：开盘一字涨停或达到涨停价 (涨幅 >= 9.85%)，无法买入
+                    is_limit_up = (open_p >= up_l)
+                    if not is_limit_up and "prev_close" in bar and bar["prev_close"] > 0:
+                        is_limit_up = (open_p >= bar["prev_close"] * 1.0985)
+
+                    if is_limit_up:
                         pending_rebalance[code] = True
                         rejects_list.append({
                             "date": current_date, "code": code, "action": "BUY",
@@ -426,7 +472,7 @@ class BacktestEngine:
             # (E) 每日收盘盯市 (Mark-to-Market)
             # -------------------------------------------------------------
             market_val = sum(
-                positions[c]["total_shares"] * current_bar[c]["close"]
+                positions[c]["total_shares"] * (current_bar[c]["close"] if c in current_bar else positions[c]["avg_cost"])
                 for c in data_dict.keys()
             )
             total_assets = cash + market_val

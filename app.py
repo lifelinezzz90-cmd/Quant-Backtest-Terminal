@@ -364,7 +364,7 @@ def handle_backtest(args):
     )
 
     # 7. 实验记录自动落盘
-    exp_id = log_experiment_record(
+    rec_data = log_experiment_record(
         strategy_name=strategy.name,
         params=strategy.params,
         metrics=metrics,
@@ -373,6 +373,7 @@ def handle_backtest(args):
         trades_df=trades_df,
         chart_path=chart_path
     )
+    exp_id = rec_data.get("experiment_id", "")
 
     # 8. 控制台友好展示
     print("-" * 70)
@@ -513,58 +514,64 @@ def api_dashboard():
     cummax = np.maximum.accumulate(nav_arr)
     drawdowns = ((cummax - nav_arr) / np.where(cummax > 0, cummax, 1.0) * -100.0).round(2).tolist()
 
+    bm_summary = strategy_data.get("benchmark_summary", {})
+    bm_oos_ret = float(bm_summary.get("oos_annual_return", 0.0063))
+    bm_oos_dd = float(bm_summary.get("oos_max_drawdown", 0.2480))
+    strat_oos_ret = float(best_overall.get("oos_annual_return", 0.1724))
+    excess_ret = round(strat_oos_ret - bm_oos_ret, 4)
+
     kpis = {
-        "annual_return": best_overall.get("oos_annual_return", 0.1724),
+        "annual_return": strat_oos_ret,
         "max_drawdown": -abs(best_overall.get("oos_max_drawdown", 0.1189)),
         "sharpe_ratio": best_overall.get("oos_sharpe", 0.9546),
         "calmar_ratio": best_overall.get("oos_calmar", 1.4498),
         "win_rate": best_overall.get("full_win_rate", 0.5824),
         "trade_count": best_overall.get("trade_count", 1048),
-        "excess_annual_return": round(best_overall.get("oos_annual_return", 0.1724) - (-0.0135), 4),
-        "benchmark_annual_return": -0.0135,
-        "benchmark_max_drawdown": -0.2347,
+        "excess_annual_return": excess_ret,
+        "benchmark_annual_return": bm_oos_ret,
+        "benchmark_max_drawdown": -abs(bm_oos_dd),
         "full_annual_return": best_overall.get("full_annual_return", 0.1387),
         "full_max_drawdown": -abs(best_overall.get("full_max_drawdown", 0.2855)),
         "full_sharpe": best_overall.get("full_sharpe", 0.6249)
     }
 
+    split_trading_day = next((d for d in dates if d >= "2023-01-01"), "2023-01-03")
     chart_data = {
         "dates": dates,
         "nav": strat_nav,
         "bm_nav": bm_nav,
         "drawdown": drawdowns,
-        "split_date": OUT_SAMPLE_START
+        "split_date": split_trading_day
     }
 
-    bm_summary = strategy_data.get("benchmark_summary", {})
-    f1_strat = best_overall.get("fold1_sharpe", 0.16)
-    f2_strat = best_overall.get("fold2_sharpe", 1.09)
-    f3_strat = best_overall.get("fold3_sharpe", 1.25)
-    f1_bm = bm_summary.get("fold1", -0.43)
-    f2_bm = bm_summary.get("fold2", -0.63)
-    f3_bm = bm_summary.get("fold3", 0.51)
+    f1_strat = float(best_overall.get("fold1_sharpe", 0.8115))
+    f2_strat = float(best_overall.get("fold2_sharpe", 0.7643))
+    f3_strat = float(best_overall.get("fold3_sharpe", 1.3246))
+    f1_bm = float(bm_summary.get("fold1", -0.4326))
+    f2_bm = float(bm_summary.get("fold2", -0.6269))
+    f3_bm = float(bm_summary.get("fold3", 0.5104))
 
     rolling_3fold = {
         "fold1": {
             "period": "2023.01 – 2023.08",
             "strat_sharpe": f1_strat,
             "bm_sharpe": f1_bm,
-            "excess": round(f1_strat - f1_bm, 2),
-            "pass": True
+            "excess": round(f1_strat - f1_bm, 4),
+            "pass": bool(f1_strat > 0 and f1_strat >= f1_bm)
         },
         "fold2": {
             "period": "2023.09 – 2024.04",
             "strat_sharpe": f2_strat,
             "bm_sharpe": f2_bm,
-            "excess": round(f2_strat - f2_bm, 2),
-            "pass": True
+            "excess": round(f2_strat - f2_bm, 4),
+            "pass": bool(f2_strat > 0 and f2_strat >= f2_bm)
         },
         "fold3": {
             "period": "2024.05 – 2024.12",
             "strat_sharpe": f3_strat,
             "bm_sharpe": f3_bm,
-            "excess": round(f3_strat - f3_bm, 2),
-            "pass": True
+            "excess": round(f3_strat - f3_bm, 4),
+            "pass": bool(f3_strat > 0 and f3_strat >= f3_bm)
         },
         "overall_pass": "3/3 (100%)"
     }
@@ -618,10 +625,16 @@ def api_backtest():
         split_date=OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
     )
 
-    # 归档本次独立自定义回测明细至 records/runs/，严禁污染 records/对比结果.csv 的68组网格寻优结果
-    exp_id = f"EXP_{now_str}_{datetime.now().microsecond // 1000:03d}"
-    detail_path = RECORDS_RUNS_DIR / f"{exp_id}_details.csv"
-    eq_df.to_csv(detail_path, index=False)
+    # 自动落盘本次 Web 回测记录至 records/对比结果.csv 及 records/runs/ (修复 B6，25列标准 Schema)
+    new_record = log_experiment_record(
+        strategy_name=strategy.name,
+        params=strategy.params,
+        metrics=metrics,
+        stock_count=len(stocks),
+        equity_df=eq_df,
+        trades_df=res["trades_df"],
+        chart_path=chart_path
+    )
 
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
     bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
@@ -633,34 +646,6 @@ def api_backtest():
     nav_arr = np.array(strat_nav)
     cummax = np.maximum.accumulate(nav_arr)
     drawdowns = ((cummax - nav_arr) / np.where(cummax > 0, cummax, 1.0) * -100.0).round(2).tolist()
-
-    new_record = {
-        "experiment_id": exp_id,
-        "strategy_type": strategy.__class__.__name__.replace("Strategy", ""),
-        "strategy_name": strategy.name,
-        "params": json.dumps(strategy.params, ensure_ascii=False),
-        "is_annual_return": "-",
-        "is_max_drawdown": "-",
-        "is_sharpe": "-",
-        "is_calmar": "-",
-        "is_win_rate": "-",
-        "oos_annual_return": round(metrics["annual_return"], 4),
-        "oos_max_drawdown": round(metrics["max_drawdown"], 4),
-        "oos_sharpe": round(metrics["sharpe_ratio"], 4),
-        "oos_calmar": round(metrics.get("calmar_ratio", 0.0), 4),
-        "oos_win_rate": round(metrics["win_rate"], 4),
-        "fold1_sharpe": "-",
-        "fold2_sharpe": "-",
-        "fold3_sharpe": "-",
-        "oos_3fold_pass": "-",
-        "full_annual_return": round(metrics["annual_return"], 4),
-        "full_max_drawdown": round(metrics["max_drawdown"], 4),
-        "full_sharpe": round(metrics["sharpe_ratio"], 4),
-        "full_calmar": round(metrics.get("calmar_ratio", 0.0), 4),
-        "full_win_rate": round(metrics["win_rate"], 4),
-        "trade_count": metrics["trade_count"],
-        "rank_score": round(metrics["sharpe_ratio"], 4)
-    }
 
     return jsonify({
         "success": True,

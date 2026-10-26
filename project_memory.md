@@ -4,28 +4,18 @@
 
 ## 一、当前开发状态总览（最新）
 
-- **当前阶段**：`Phase 0 ~ Phase 5 全流程圆满交付收官 (100% 验收就绪)`
+- **当前阶段**：`红队对抗审计 9 项 Blocker 与 12 项 Major 全面清零，全链路真值与 25 列统一封版 (100% 验收就绪)`
 - **当前协作模式**：分层协作模式（高级模型顶层规划；Antigravity 次级实施 AI 严格对齐落地 Phase 0 ~ Phase 5 全套交付件）
 - **项目截止时间**：2026 年 11 月 3 日 22:00（FTP 压缩包上传，根目录直接打包且必须包含 `.git`、清洗后 `data/`、`strategy/strategy.json`、`records/对比结果.csv`）
-- **Phase 5 最终收官与交互修复成果 (Latest)**：
-  - **JS 初始化语法错误根除与模块隔离**：修复 `templates/index.html` 中因修改导致的未闭合函数语法错误（`node --check` 语法检查 100% 通过）；在 `DOMContentLoaded` 入口为「1. 双主题初始化」、「2. 动态参数面板渲染」、「3. 看板数据与 ECharts 渲染」三大部分配置独立的 `try ... catch` 容错隔离保护，确保单模块异常绝不阻断页面主线程运行。
-  - **DOM ID 零死角精准匹配与双主题修复**：修正顶栏主题切换按钮结构为 `<span id="themeIcon">🌙</span> <span id="themeText">深色终端</span>`，经自动化脚本验证 JS 调用的全部 42 个 DOM ID 在 HTML 中 100% 存在（0 缺失）；点击顶栏按钮流畅实现 `dark`/`light` 样式无缝切换并自适应重绘 ECharts。
-  - **ECharts 容器尺寸加固与真机 Headless 验真**：加固 `#mainChartContainer` 容器显式尺寸（`width: 100%; height: 440px; min-height: 440px;`），配置 SVG 内联 Favicon 消除 404；经 Playwright 真实浏览器环境全链路测试：页面加载、ECharts Canvas 生成（1 个）、4 个动态参数输入框初始化、下拉动态切换三策略、点击回测实时计算与更新等全部流程跑通，浏览器控制台 **0 Console Errors**。
-  - **全量 Material 图标英文代号根除**：彻底移除外网 Google Material Symbols 字体依赖，全面清理 HTML 与 JavaScript 中所有残存英文图标代号（`query_stats` 改为纯加粗大写 `Q` Logo，移除所有标题前的 `show_chart`、`instant_mix`、`fact_check` 等，移除按钮上的 `bolt`、`refresh`、`restart_alt`、`file_download`，移除下拉框内重叠的 `expand_more`）；回测 Loading 状态采用轻量纯 CSS 旋转动画圆环，彻底告别 360 度旋转的 `hourglass_empty` 英文单词。
-  - **三策略参数动态切换与容错打通**：前端参数面板随「趋势跟踪 (TrendFollowing)」、「多因子打分 (MultiFactor)」、「均值回复 (MeanReversion)」下拉与预设切换无缝动态更新 4 项核心参数；多因子策略对齐任务书绑定 `lookback_days`、`momentum_weight`、`volatility_weight`、`sentiment_weight`（自动附加 `rebalance_days=5, top_n=8`）；后端 `app.py` 与策略构造器健全类型过滤与默认值保护，杜绝参数类型转换与非法关键字异常。
-  - **DOM 操作空指针防御 (Null-Safety)**：前端封装 `safeSetText` / `safeSetHTML` 判空防护，彻底根治因标签更新引发的 `TypeError: Cannot set properties of null`，捕获异常时精准打印 `err.message`。
-  - **68 组实验基准防污染隔离**：`POST /api/backtest` 自定义回测独立归档运行数据至 `records/runs/`，严禁向 `records/对比结果.csv` 追加脏记录；首屏 `GET /api/dashboard` 永久加载全局最优 `TF_5_40_5`（年化 `+17.24%`、回撤 `-11.89%`、夏普 `0.9546`、胜率 `58.24%`），实验库恢复并永久保持纯净 68 行。
-  - **可视化终端精修与双主题**：完成 `templates/index.html` 像素级排版对齐与防折行超框优化；顶栏实现「🌙 深色终端 / ☀️ 浅色研报」一键无缝双主题切换；布局采用 Grid 等高拉伸（`items-stretch`），彻底清除浅色模式所有深色容器残框（导航胶囊、三折卡片、黄色预警 Banner、输入框、下拉框与表格全量语义化配色修复）。
-  - **数据治理表格首行防遮挡**：重构 `.sticky-table` 表头为实心不透明背景（深色 `#161b26` / 浅色 `#f1f5f9`），设置 `border-collapse: separate; border-spacing: 0;` 并规范表头内边距，彻底解决首行（万科A/贵州茅台）被表头遮挡的问题。
-  - **Windows 中文字体回退根治**：彻底消除将中文元素赋予 `font-mono` / `font-metric-tabular` 导致的 Windows DirectWrite 回退至点阵新宋体（NSimSun）发虚发涩缺陷。确立全局界面中文字体栈为 `-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif !important;`，仅对纯数值与代码（`.num, code, .font-mono-num`）精准启用 `JetBrains Mono` 等宽字体。
-  - **离线 ECharts 双子图交互**：引入本地离线 `static/echarts.min.js`（1,029,203 bytes），实现策略累积净值曲线（带 2023-01-03 样本外分界纵线、极值标注与面积渐变）+ 沪深300基准对比虚线 + 水下动态回撤面积子图（0.00% 至 -28.55%），多指标联动浮窗与窗口 resize 自适应。
-  - **后端真实 API 全打通**：`app.py` 提供 `GET /api/dashboard`、`POST /api/backtest`、`GET /api/export_csv`。前端直连真实回测引擎，支持参数实时表单提交、秒级高保真撮合重算并动态更新曲线与 68 组实验库首行。
-  - **全套交付文件与脚本**：
-    - `启动.bat`：Windows 1 键自动化环境与数据检查、启动 Flask 服务并自动唤起默认浏览器；
-    - `README.md`：精炼控制在 1 页左右，包含快速上手、CLI 模式与目录结构；
-    - `提交信息.txt`：包含团队信息占位符、数据治理与等比前复权技术发现、最优策略全套指标汇总；
-    - `ai_log.md`：全流程规范记录 Phase 0 至 Phase 5 的 AI 协作记录；
-    - `demo/`：三张 300 DPI 无乱码高清交付成果图（最优策略净值与回撤对比、三大策略流派68组寻优分布、样本外三折滚动验证对比）。
+- **红队审查清零与全链路自洽重构成果 (Latest: 2026-10-26)**：
+  - **模块 1 根除硬编码真值自洽**：清除全项目所有基准与回测假数字，三折 PASS 判据严格修正为“3折年化收益率与夏普全部 > 0 且夏普全部 >= 同期基准”；代码原生导出 `fold1_sharpe (+0.8115)`、`fold2_sharpe (+0.7643)`、`fold3_sharpe (+1.3246)` 与沪深300真值指标（OOS 年化 `+0.63%`、最大回撤 `24.80%`、超额年化 `+16.61%`；全周期策略累计收益 `+111.82%`、期末净值 `2.1182` vs 基准 `1.3251`）。
+  - **模块 2 统一 25 列 CSV Schema**：彻底消除 `logger.py` 与 `optimizer.py` 的列错位冲突，统一为 25 列标准 Schema；CLI（`--mode backtest`）与 Web（`POST /api/backtest`）自动以 25 列追加落盘，首屏默认激活策略永久锁定 `strategy.json` 最优配置。
+  - **模块 3 废除随机舆情与升级真实量价多因子**：彻底删除 `np.random.seed(42)` 伪造舆情代码与 `sentiment_scores.csv`；多因子策略升级为真实日线行情的量价反转与成交量稳定性因子，68 组网格寻优 100% 纯净重跑。
+  - **模块 4 引擎交易日历对齐与涨跌停加固**：`load_cleaned_data()` 强制以 `000300` 为基准日历自动对齐补齐标的停牌行（ffill 填充、成交量置 0）；`current_bar` 判空防护彻底根治 KeyError；卖出显式断言 `pos.last_buy_date != current_date`（T+1）；普通股涨跌停判定采用 `9.85%`（`1.0985` / `0.9015`）高精度阈值。
+  - **模块 5 前端 100% 离线化与交互加固**：剥离 Tailwind CDN 与 Google Fonts 外网依赖，本地引入 `static/tailwindcss.js` 与 `static/echarts.min.js`，实现 0 外网请求；ECharts 样本外分界线动态自适应首个交易日（`2023-01-03`）；数据治理表动态渲染后端检验结果；日期输入增加格式与逻辑防呆校验。
+  - **模块 6 启动脚本延时与报告充实**：`启动.bat` 采用后台延时 2 秒唤起默认浏览器，杜绝首次启动 `ERR_CONNECTION_REFUSED`；ETL 报告笔误修正为 `+8.22%`，如实统计停牌补齐（长江电力 11 天、海康威视 2 天）与除权分红校准；`requirements.txt` 补全 `requests`；`ai_log.md` 规范采用 WorkBuddy / Trae 协作体系。
+  - **模块 7 交付件表单对齐**：`提交信息.txt` 补全考生四项信息占位符与腾讯财经 2026-10-19 等比前复权独立声明；全套指标、三折夏普与成交统计（`1,048 笔成交: 538 笔买入, 510 笔闭环, 58.24% 胜率`）与 `strategy.json` 小数点级 100% 一致。
+  - **模块 8 空间清理与全链路回归**：清理临时测试明细与缓存；`validate`、`optimize`（68 组纯净无污染）、`generate_demo_charts.py`、CLI 回测（测完恢复纯净 68 行）、`test`（四重质量验真 0.00e+00 物理截断未来函数、0.0000元会计误差）全部 100% PASS。
 - **数据对齐与底层状态**：
   - **主办方 6 列规范对齐**：全量 10 只股票及沪深 300 基准日线直接存放于 `data/{code}.csv`，严格统一为 6 列：`date,open,high,low,close,volume`，日期 `YYYY-MM-DD`，价格为等比前复权；
   - **等比前复权与零未来函数**：全面废除公开接口减法复权，以 2024-12-31 最新不复权收盘价为锚点，利用后复权序列按等比折算因子折算，中国平安 (`601318`) 在 `2019-02-25` 真实收益率精确还原为 **+8.22%**（彻底根治 12.37% 假毛刺）；毛刺修复采用纯前向 `prev_close` 平滑；

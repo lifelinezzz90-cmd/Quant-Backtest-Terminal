@@ -58,8 +58,15 @@ def main():
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 7.5), dpi=300, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
     dates = pd.to_datetime(eq_df['date'])
 
+    strat_name = best_strat_info.get('strategy_name', 'TF_5_40_5')
+    strat_oos_ret = float(best_strat_info.get('oos_annual_return', 0.1724))
+    bm_oos_ret = float(bm_summary.get('oos_annual_return', 0.0063))
+    excess_ret = strat_oos_ret - bm_oos_ret
+    strat_oos_sh = float(best_strat_info.get('oos_sharpe', 0.9546))
+    strat_oos_dd = float(best_strat_info.get('oos_max_drawdown', 0.1189))
+
     # Top Subplot: NAV
-    ax1.plot(dates, eq_df['nav'], label='趋势跟踪最优策略 (TF_5_40_5)', color='#4f46e5', linewidth=2.0)
+    ax1.plot(dates, eq_df['nav'], label=f'趋势跟踪最优策略 ({strat_name})', color='#4f46e5', linewidth=2.0)
     ax1.plot(dates, eq_df['bm_nav'], label='沪深300基准 (000300)', color='#94a3b8', linestyle='--', linewidth=1.5)
     ax1.axvline(pd.to_datetime('2023-01-03'), color='#e11d48', linestyle=':', linewidth=1.5, label='样本外切分点 (2023-01-03)')
     ax1.fill_between(dates, eq_df['nav'], 1.0, where=(dates >= pd.to_datetime('2023-01-03')), color='#4f46e5', alpha=0.08)
@@ -69,7 +76,7 @@ def main():
     ax1.grid(True, linestyle='--', alpha=0.4)
     ax1.legend(loc='upper left', frameon=True, fontsize=10)
 
-    oos_text = '【样本外阶段 (2023-2024)】\n策略年化: +17.24%\n基准年化: -1.35%\n超额Alpha: +18.59%\n夏普比率: 0.9546\n最大回撤: 11.89%'
+    oos_text = f"【样本外阶段 (2023-2024)】\n策略年化: {strat_oos_ret*100:+.2f}%\n基准年化: {bm_oos_ret*100:+.2f}%\n超额Alpha: {excess_ret*100:+.2f}%\n夏普比率: {strat_oos_sh:.4f}\n最大回撤: {strat_oos_dd*100:.2f}%"
     ax1.text(0.72, 0.55, oos_text, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top',
              bbox=dict(boxstyle='round,pad=0.5', facecolor='#f8fafc', edgecolor='#cbd5e1', alpha=0.9))
 
@@ -110,9 +117,10 @@ def main():
 
     best_idx = df_exp['oos_sharpe'].idxmax()
     best_row = df_exp.loc[best_idx]
+    best_opt_name = best_row.get('strategy_name', strat_name)
     ax.scatter([best_row['oos_max_drawdown'] * 100], [best_row['oos_annual_return'] * 100],
                c='#e11d48', marker='*', s=350, edgecolors='yellow', linewidth=1.5,
-               label=f"最优配置: TF_5_40_5 (夏普 {best_row['oos_sharpe']:.4f})", zorder=10)
+               label=f"最优配置: {best_opt_name} (夏普 {best_row['oos_sharpe']:.4f})", zorder=10)
 
     ax.set_title('三大策略流派68组全网格寻优表现分布 (样本外收益 vs 最大回撤)', fontsize=13, fontweight='bold', pad=12)
     ax.set_xlabel('样本外最大回撤 (%) [越靠左风险越小]', fontsize=11)
@@ -129,16 +137,16 @@ def main():
     # -------------------------------------------------------------
     # 图 3: 样本外三折滚动验证对比 (100% 严格读取 strategy.json 真实数值)
     # -------------------------------------------------------------
-    f1_strat = float(best_strat_info.get('fold1_sharpe', 0.16))
-    f2_strat = float(best_strat_info.get('fold2_sharpe', 1.09))
-    f3_strat = float(best_strat_info.get('fold3_sharpe', 1.25))
+    f1_strat = float(best_strat_info.get('fold1_sharpe', 0.8115))
+    f2_strat = float(best_strat_info.get('fold2_sharpe', 0.7643))
+    f3_strat = float(best_strat_info.get('fold3_sharpe', 1.3246))
 
-    f1_bm = float(bm_summary.get('fold1', -0.43))
-    f2_bm = float(bm_summary.get('fold2', -0.63))
-    f3_bm = float(bm_summary.get('fold3', 0.51))
+    f1_bm = float(bm_summary.get('fold1', -0.4326))
+    f2_bm = float(bm_summary.get('fold2', -0.6269))
+    f3_bm = float(bm_summary.get('fold3', 0.5104))
 
     oos_strat = float(best_strat_info.get('oos_sharpe', 0.9546))
-    oos_bm = float(bm_summary.get('oos', -0.18))
+    oos_bm = float(bm_summary.get('oos', 0.0119))
 
     folds_data = [
         {'fold': 'Fold 1\n(2023.01-2023.08)', 'strat_sharpe': f1_strat, 'bm_sharpe': f1_bm},
@@ -153,7 +161,7 @@ def main():
     x = np.arange(len(df_folds))
     width = 0.35
 
-    rects1 = ax.bar(x - width/2, df_folds['strat_sharpe'], width, label='最优策略 (TF_5_40_5)', color='#4f46e5', edgecolor='black', linewidth=0.5)
+    rects1 = ax.bar(x - width/2, df_folds['strat_sharpe'], width, label=f'最优策略 ({strat_name})', color='#4f46e5', edgecolor='black', linewidth=0.5)
     rects2 = ax.bar(x + width/2, df_folds['bm_sharpe'], width, label='沪深300基准 (000300)', color='#94a3b8', edgecolor='black', linewidth=0.5)
 
     ax.axhline(0, color='#334155', linewidth=0.8)
@@ -183,9 +191,16 @@ def main():
                     fontsize=9.5, color='#64748b')
 
     for i in range(len(df_folds)):
-        ax.text(i, max(df_folds['strat_sharpe'].iloc[i], 0) + 0.28, 'PASS (3/3 全胜)' if i < 3 else 'PASS (全期胜出)',
-                ha='center', fontsize=9, fontweight='bold', color='#10b981',
-                bbox=dict(boxstyle='round,pad=0.25', facecolor='#dcfce7', edgecolor='#86efac', alpha=0.9))
+        s_sh = df_folds['strat_sharpe'].iloc[i]
+        b_sh = df_folds['bm_sharpe'].iloc[i]
+        is_pass = (s_sh > 0 and s_sh >= b_sh)
+        badge_text = 'PASS (3/3全胜)' if (i < 3 and is_pass) else ('PASS (全期胜出)' if is_pass else 'HOLD')
+        ax.text(i, max(s_sh, 0) + 0.28, badge_text,
+                ha='center', fontsize=9, fontweight='bold',
+                color='#10b981' if is_pass else '#64748b',
+                bbox=dict(boxstyle='round,pad=0.25',
+                          facecolor='#dcfce7' if is_pass else '#f1f5f9',
+                          edgecolor='#86efac' if is_pass else '#cbd5e1', alpha=0.9))
 
     ax.set_ylim(-1.0, 1.8)
     plt.tight_layout()

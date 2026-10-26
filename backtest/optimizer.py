@@ -202,13 +202,14 @@ class GridOptimizer:
         self.benchmark_df = benchmark_df
         self.engine = BacktestEngine(initial_cash=1_000_000.0)
 
-        # 预先计算基准在各区间的夏普比率，作为样本外折叠验证的基准线
-        self.bm_sharpe_dict = self._calc_benchmark_sharpes()
+        # 预先计算基准在各区间的全面指标（夏普、年化收益、最大回撤、期末净值）
+        self.bm_summary_dict = self._calc_benchmark_summary()
+        self.bm_sharpe_dict = self.bm_summary_dict
 
-    def _calc_benchmark_sharpes(self) -> Dict[str, float]:
-        """计算基准在各子区间的夏普比率"""
+    def _calc_benchmark_summary(self) -> Dict[str, Any]:
+        """计算基准在各子区间的夏普比率、年化收益率、最大回撤与期末净值"""
         bm = self.benchmark_df.sort_values("date").reset_index(drop=True)
-        res = {}
+        res: Dict[str, Any] = {}
         for name, s_d, e_d in [
             ("fold1", FOLD1_START, FOLD1_END),
             ("fold2", FOLD2_START, FOLD2_END),
@@ -217,13 +218,25 @@ class GridOptimizer:
             ("is", IS_START, IS_END),
             ("full", FULL_START, FULL_END),
         ]:
-            sub = bm[(bm["date"] >= s_d) & (bm["date"] <= e_d)]
+            sub = bm[(bm["date"] >= s_d) & (bm["date"] <= e_d)].reset_index(drop=True)
             if len(sub) > 2:
+                p0 = float(sub["close"].iloc[0])
+                p1 = float(sub["close"].iloc[-1])
+                cum_ret = (p1 / p0) - 1.0
+                n = len(sub)
+                ann_ret = ((1.0 + cum_ret) ** (ANNUAL_TRADING_DAYS / n)) - 1.0 if n > 0 else 0.0
+                cummax = sub["close"].cummax()
+                max_dd = abs(float(((sub["close"] - cummax) / np.where(cummax > 0, cummax, 1.0)).min()))
                 rets = sub["close"].pct_change().dropna()
                 excess = rets - (RISK_FREE_RATE / ANNUAL_TRADING_DAYS)
-                std = rets.std()
+                std = float(rets.std())
                 sh = float((excess.mean() / std) * np.sqrt(ANNUAL_TRADING_DAYS)) if std > 1e-8 else 0.0
+
                 res[name] = round(sh, 4)
+                res[f"{name}_annual_return"] = round(ann_ret, 4)
+                res[f"{name}_max_drawdown"] = round(max_dd, 4)
+                res[f"{name}_sharpe"] = round(sh, 4)
+                res[f"{name}_final_equity"] = round(p1 / p0, 4)
             else:
                 res[name] = 0.0
         return res
@@ -269,14 +282,17 @@ class GridOptimizer:
             res_f3 = self.engine.run(strategy, self.data_dict, start_date=FOLD3_START, end_date=FOLD3_END)
             m_f3 = calculate_metrics(res_f3["equity_df"], self.benchmark_df, res_f3["trades_df"])
 
-            # 3. 三折滚动验证判定 (每折夏普 > 0 或 不劣于同期基准)
+            # 3. 三折滚动验证判定 (3折收益与夏普均大于0且夏普不低于同期基准，修复 Major 1)
+            f1_ret = m_f1["annual_return"]
+            f2_ret = m_f2["annual_return"]
+            f3_ret = m_f3["annual_return"]
             f1_sh = m_f1["sharpe_ratio"]
             f2_sh = m_f2["sharpe_ratio"]
             f3_sh = m_f3["sharpe_ratio"]
 
-            pass_f1 = (f1_sh > 0) or (f1_sh >= self.bm_sharpe_dict["fold1"])
-            pass_f2 = (f2_sh > 0) or (f2_sh >= self.bm_sharpe_dict["fold2"])
-            pass_f3 = (f3_sh > 0) or (f3_sh >= self.bm_sharpe_dict["fold3"])
+            pass_f1 = (f1_ret > 0) and (f1_sh > 0) and (f1_sh >= self.bm_sharpe_dict["fold1"])
+            pass_f2 = (f2_ret > 0) and (f2_sh > 0) and (f2_sh >= self.bm_sharpe_dict["fold2"])
+            pass_f3 = (f3_ret > 0) and (f3_sh > 0) and (f3_sh >= self.bm_sharpe_dict["fold3"])
             oos_3fold_pass = bool(pass_f1 and pass_f2 and pass_f3)
 
             # 4. 稳健综合评分: 重点考察样本外夏普、样本外卡玛比率及三折一致性
@@ -345,6 +361,9 @@ class GridOptimizer:
                     "oos_sharpe": float(cat_best["oos_sharpe"]),
                     "oos_max_drawdown": float(cat_best["oos_max_drawdown"]),
                     "oos_3fold_pass": bool(cat_best["oos_3fold_pass"]),
+                    "fold1_sharpe": float(cat_best["fold1_sharpe"]),
+                    "fold2_sharpe": float(cat_best["fold2_sharpe"]),
+                    "fold3_sharpe": float(cat_best["fold3_sharpe"]),
                     "full_annual_return": float(cat_best["full_annual_return"]),
                     "full_sharpe": float(cat_best["full_sharpe"]),
                     "full_max_drawdown": float(cat_best["full_max_drawdown"])
@@ -359,6 +378,9 @@ class GridOptimizer:
             "oos_max_drawdown": float(best_overall_row["oos_max_drawdown"]),
             "oos_calmar": float(best_overall_row["oos_calmar"]),
             "oos_3fold_pass": bool(best_overall_row["oos_3fold_pass"]),
+            "fold1_sharpe": float(best_overall_row["fold1_sharpe"]),
+            "fold2_sharpe": float(best_overall_row["fold2_sharpe"]),
+            "fold3_sharpe": float(best_overall_row["fold3_sharpe"]),
             "is_annual_return": float(best_overall_row["is_annual_return"]),
             "is_sharpe": float(best_overall_row["is_sharpe"]),
             "full_annual_return": float(best_overall_row["full_annual_return"]),
@@ -372,7 +394,7 @@ class GridOptimizer:
         export_summary = {
             "best_overall": best_overall,
             "category_bests": category_bests,
-            "benchmark_summary": self.bm_sharpe_dict,
+            "benchmark_summary": self.bm_summary_dict,
             "total_evaluated_combinations": total,
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }

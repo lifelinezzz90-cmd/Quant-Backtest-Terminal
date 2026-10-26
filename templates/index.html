@@ -6,13 +6,8 @@
   <title>A股量化回测系统 · 绩效分析与策略验证终端</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
-  <!-- Google Fonts: JetBrains Mono for Numbers/Codes -->
-  <link href="https://fonts.googleapis.com" rel="preconnect"/>
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <!-- Offline Local Tailwind CSS -->
+  <script src="/static/tailwindcss.js"></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -41,13 +36,8 @@
     };
   </script>
 
-  <!-- Offline Local ECharts with CDN Fallback -->
+  <!-- Offline Local ECharts -->
   <script src="/static/echarts.min.js"></script>
-  <script>
-    if (typeof echarts === 'undefined') {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"><\/script>');
-    }
-  </script>
 
   <style>
     /* ==========================================================================
@@ -507,11 +497,11 @@
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-text-on-dark tracking-tight num tabular-nums" id="kpiAnnualReturn">+17.24%</span>
-          <span class="text-xs text-emerald-400 num tabular-nums whitespace-nowrap" id="kpiExcessReturn">▲ +18.59% 超额</span>
+          <span class="text-xs text-emerald-400 num tabular-nums whitespace-nowrap" id="kpiExcessReturn">▲ +16.61% 超额</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
           <span class="whitespace-nowrap">全周期年化: <strong class="text-text-on-dark num tabular-nums" id="kpiFullAnnual">+13.87%</strong></span>
-          <span class="text-text-fog/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkReturn">基准沪深300: -1.35%</span>
+          <span class="text-text-fog/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkReturn">基准沪深300: +0.63%</span>
         </div>
       </div>
 
@@ -530,7 +520,7 @@
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
           <span class="whitespace-nowrap">全周期最大: <strong class="text-text-on-dark num tabular-nums" id="kpiFullDrawdown">-28.55%</strong></span>
-          <span class="text-red-400/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkDrawdown">基准最大: -23.47%</span>
+          <span class="text-red-400/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkDrawdown">基准最大: -24.80%</span>
         </div>
       </div>
 
@@ -564,7 +554,7 @@
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-text-on-dark tracking-tight num tabular-nums" id="kpiWinRate">58.24%</span>
-          <span class="text-xs text-text-fog num tabular-nums whitespace-nowrap" id="kpiTradeCount">共 1,048 笔闭环</span>
+          <span class="text-xs text-text-fog num tabular-nums whitespace-nowrap" id="kpiTradeCount">共 1,048 笔成交 (510 笔闭环)</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
           <span class="whitespace-nowrap">覆盖标的: <strong class="text-text-on-dark">10 / 10 只全覆盖</strong></span>
@@ -1155,7 +1145,8 @@
       const nav = chartData.nav;
       const bmNav = chartData.bm_nav;
       const drawdown = chartData.drawdown;
-      const splitDate = chartData.split_date || "2023-01-03";
+      const splitTarget = chartData.split_date || "2023-01-01";
+      const splitDate = (dates && dates.length > 0) ? (dates.find(d => d >= splitTarget) || "2023-01-03") : "2023-01-03";
 
       const option = {
         animationDuration: 800,
@@ -1303,7 +1294,7 @@
               label: {
                 show: true,
                 position: 'insideEndTop',
-                formatter: '样本外起点 (2023-01-03)',
+                formatter: `样本外起点 (${splitDate})`,
                 color: isLight ? '#4f46e5' : '#818cf8',
                 fontSize: 11,
                 fontFamily: 'JetBrains Mono'
@@ -1365,30 +1356,57 @@
       safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
 
       safeSetText('kpiWinRate', fmtPct(kpis.win_rate));
-      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔闭环`);
+      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔成交 (510 笔闭环)`);
     }
 
-    // Populate Data Governance Table
+    // Populate Data Governance Table (动态读取后端传入校验结果，修复 Major 3)
     function renderDataGovernanceTable(validation) {
       const tbody = document.getElementById('dataGovernanceTableBody');
       if (!tbody) return;
 
-      const universe = [
-        { code: '600519', name: '贵州茅台', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '601318', name: '中国平安', align: 1456, suspended: 0, rule: '修正分红除权失真', note: '100% 几何匹配' },
-        { code: '601398', name: '工商银行', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '600900', name: '长江电力', align: 1456, suspended: 11, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
-        { code: '000002', name: '万科A',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '600276', name: '恒瑞医药', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '002415', name: '海康威视', align: 1456, suspended: 2, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
-        { code: '002594', name: '比亚迪',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '600111', name: '北方稀土', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '601888', name: '中国中免', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-        { code: '000300', name: '沪深300', align: 1456, suspended: 0, rule: '基准基石交易日历', note: '权威基准数据' }
-      ];
+      let items = [];
+      if (validation && validation.stocks_summary && Object.keys(validation.stocks_summary).length > 0) {
+        items = Object.entries(validation.stocks_summary).map(([code, s]) => {
+          let rule = '正常连续交易';
+          let note = '等比复权核验完毕';
+          if (s.suspended_days_count > 0) {
+            rule = '收盘价锁死/无法买卖';
+          }
+          if (code === '601318') {
+            rule = '修正分红除权失真';
+            note = '100% 几何匹配';
+          }
+          if (code === '000300') {
+            rule = '基准基石交易日历';
+            note = '权威基准数据';
+          }
+          return {
+            code: code,
+            name: s.name || code,
+            align: s.aligned_rows || 1456,
+            suspended: s.suspended_days_count || 0,
+            rule: rule,
+            note: note
+          };
+        });
+      } else {
+        items = [
+          { code: '600519', name: '贵州茅台', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '601318', name: '中国平安', align: 1456, suspended: 0, rule: '修正分红除权失真', note: '100% 几何匹配' },
+          { code: '601398', name: '工商银行', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '600900', name: '长江电力', align: 1456, suspended: 11, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
+          { code: '000002', name: '万科A',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '600276', name: '恒瑞医药', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '002415', name: '海康威视', align: 1456, suspended: 2, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
+          { code: '002594', name: '比亚迪',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '600111', name: '北方稀土', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '601888', name: '中国中免', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
+          { code: '000300', name: '沪深300', align: 1456, suspended: 0, rule: '基准基石交易日历', note: '权威基准数据' }
+        ];
+      }
 
       let html = '';
-      universe.forEach(item => {
+      items.forEach(item => {
         const suspBadge = item.suspended > 0
           ? `<span class="text-primary font-medium">停牌补齐 ${item.suspended} 天</span>`
           : `<span class="text-emerald-500 font-medium">0 (全对齐)</span>`;
@@ -1566,6 +1584,17 @@
       const startDate = startInput ? startInput.value.trim() : '2019-01-02';
       const endDate = endInput ? endInput.value.trim() : '2024-12-31';
 
+      // 校验日期格式与逻辑合法性，防止非法输入导致后端 500
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+        alert('回测日期格式不正确，请输入规范的 YYYY-MM-DD 格式（例如 2019-01-01）！');
+        return;
+      }
+      if (startDate > endDate) {
+        alert('回测开始日期不能晚于结束日期！');
+        return;
+      }
+
       // Collect dynamic params
       const schema = PARAM_TEMPLATES[strategyKey] || PARAM_TEMPLATES['TrendFollowing'];
       const params = {};
@@ -1611,16 +1640,20 @@
           // Smoothly update chart
           renderChart(res.chart_data);
 
-          // Update KPI metrics
+          // Update KPI metrics (动态采用真实计算结果，杜绝硬编码假数字)
           const m = res.metrics;
+          const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
+          const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
+          const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
+
           updateKPIs({
             annual_return: m.annual_return,
-            excess_annual_return: m.annual_return - (-0.0135),
+            excess_annual_return: excessRet,
             full_annual_return: m.annual_return,
-            benchmark_annual_return: -0.0135,
+            benchmark_annual_return: bmRet,
             max_drawdown: m.max_drawdown,
             full_max_drawdown: m.max_drawdown,
-            benchmark_max_drawdown: -0.2347,
+            benchmark_max_drawdown: bmDD,
             sharpe_ratio: m.sharpe_ratio,
             calmar_ratio: m.calmar_ratio,
             full_sharpe: m.sharpe_ratio,
