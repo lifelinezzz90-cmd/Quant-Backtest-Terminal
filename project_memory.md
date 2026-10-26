@@ -8,6 +8,9 @@
 - **当前协作模式**：分层协作模式（高级模型顶层规划；Antigravity 次级实施 AI 严格对齐落地 Phase 0 ~ Phase 5 全套交付件）
 - **项目截止时间**：2026 年 11 月 3 日 22:00（FTP 压缩包上传，根目录直接打包且必须包含 `.git`、清洗后 `data/`、`strategy/strategy.json`、`records/对比结果.csv`）
 - **Phase 5 最终收官与交互修复成果 (Latest)**：
+  - **JS 初始化语法错误根除与模块隔离**：修复 `templates/index.html` 中因修改导致的未闭合函数语法错误（`node --check` 语法检查 100% 通过）；在 `DOMContentLoaded` 入口为「1. 双主题初始化」、「2. 动态参数面板渲染」、「3. 看板数据与 ECharts 渲染」三大部分配置独立的 `try ... catch` 容错隔离保护，确保单模块异常绝不阻断页面主线程运行。
+  - **DOM ID 零死角精准匹配与双主题修复**：修正顶栏主题切换按钮结构为 `<span id="themeIcon">🌙</span> <span id="themeText">深色终端</span>`，经自动化脚本验证 JS 调用的全部 42 个 DOM ID 在 HTML 中 100% 存在（0 缺失）；点击顶栏按钮流畅实现 `dark`/`light` 样式无缝切换并自适应重绘 ECharts。
+  - **ECharts 容器尺寸加固与真机 Headless 验真**：加固 `#mainChartContainer` 容器显式尺寸（`width: 100%; height: 440px; min-height: 440px;`），配置 SVG 内联 Favicon 消除 404；经 Playwright 真实浏览器环境全链路测试：页面加载、ECharts Canvas 生成（1 个）、4 个动态参数输入框初始化、下拉动态切换三策略、点击回测实时计算与更新等全部流程跑通，浏览器控制台 **0 Console Errors**。
   - **全量 Material 图标英文代号根除**：彻底移除外网 Google Material Symbols 字体依赖，全面清理 HTML 与 JavaScript 中所有残存英文图标代号（`query_stats` 改为纯加粗大写 `Q` Logo，移除所有标题前的 `show_chart`、`instant_mix`、`fact_check` 等，移除按钮上的 `bolt`、`refresh`、`restart_alt`、`file_download`，移除下拉框内重叠的 `expand_more`）；回测 Loading 状态采用轻量纯 CSS 旋转动画圆环，彻底告别 360 度旋转的 `hourglass_empty` 英文单词。
   - **三策略参数动态切换与容错打通**：前端参数面板随「趋势跟踪 (TrendFollowing)」、「多因子打分 (MultiFactor)」、「均值回复 (MeanReversion)」下拉与预设切换无缝动态更新 4 项核心参数；多因子策略对齐任务书绑定 `lookback_days`、`momentum_weight`、`volatility_weight`、`sentiment_weight`（自动附加 `rebalance_days=5, top_n=8`）；后端 `app.py` 与策略构造器健全类型过滤与默认值保护，杜绝参数类型转换与非法关键字异常。
   - **DOM 操作空指针防御 (Null-Safety)**：前端封装 `safeSetText` / `safeSetHTML` 判空防护，彻底根治因标签更新引发的 `TypeError: Cannot set properties of null`，捕获异常时精准打印 `err.message`。

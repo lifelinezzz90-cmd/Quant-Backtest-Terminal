@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>A股量化回测系统 · 绩效分析与策略验证终端</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
   <!-- Google Fonts: JetBrains Mono for Numbers/Codes -->
   <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -478,8 +479,9 @@
       </div>
 
       <!-- Theme Switch Button -->
-      <button id="themeToggleBtn" onclick="toggleTheme()" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark text-xs flex items-center justify-center shadow-sm transition-all cursor-pointer whitespace-nowrap">
-        <span id="themeLabel">🌙 深色终端</span>
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">深色终端</span>
       </button>
 
       <!-- Quick Reset / Reload -->
@@ -598,8 +600,8 @@
         </div>
 
         <!-- ECharts Responsive Dual Subplot Container -->
-        <div class="relative w-full rounded-lg border border-outline-variant/15 p-1 overflow-hidden" style="min-height: 440px;">
-          <div id="mainChartContainer" class="w-full" style="height: 440px;"></div>
+        <div class="relative w-full rounded-lg border border-outline-variant/15 p-1 overflow-hidden" style="width: 100%; min-height: 440px;">
+          <div id="mainChartContainer" style="width: 100%; height: 440px; min-height: 440px;"></div>
         </div>
 
         <!-- Legend and Demarcation Explainer -->
@@ -1011,6 +1013,16 @@
     }
 
     // Theme Management
+    function safeSetText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (text !== undefined && text !== null) ? text : '';
+    }
+    function safeSetHTML(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = (html !== undefined && html !== null) ? html : '';
+    }
+
+    // Theme Management
     function initTheme() {
       applyTheme(currentTheme);
     }
@@ -1022,27 +1034,19 @@
     }
 
     function applyTheme(theme) {
-    function safeSetText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = (text !== undefined && text !== null) ? text : '';
-    }
-    function safeSetHTML(id, html) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = (html !== undefined && html !== null) ? html : '';
-    }
-
-    function applyTheme(theme) {
       const htmlEl = document.documentElement;
       if (theme === 'light') {
         htmlEl.classList.remove('dark');
         htmlEl.classList.add('light');
         htmlEl.setAttribute('data-theme', 'light');
-        safeSetText('themeLabel', '☀️ 浅色研报');
+        safeSetText('themeIcon', '☀️');
+        safeSetText('themeText', '浅色研报');
       } else {
         htmlEl.classList.remove('light');
         htmlEl.classList.add('dark');
         htmlEl.setAttribute('data-theme', 'dark');
-        safeSetText('themeLabel', '🌙 深色终端');
+        safeSetText('themeIcon', '🌙');
+        safeSetText('themeText', '深色终端');
       }
 
       // Re-render chart with adapted palette if data exists
@@ -1650,11 +1654,30 @@
       }
     }
 
-    // Initialize on DOM Ready
+    // Initialize on DOM Ready with Independent Isolation
     document.addEventListener('DOMContentLoaded', () => {
-      initTheme();
-      renderDynamicParams('TrendFollowing', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
-      loadDashboardData();
+      // 1. 初始化双主题
+      try {
+        initTheme();
+      } catch (err) {
+        console.error('主题初始化失败:', err);
+      }
+
+      // 2. 渲染右侧动态参数面板
+      try {
+        const stratSelect = document.getElementById('strategySelect');
+        const defaultStrategy = stratSelect ? stratSelect.value : 'TrendFollowing';
+        renderDynamicParams(defaultStrategy, { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+      } catch (err) {
+        console.error('参数面板初始化失败:', err);
+      }
+
+      // 3. 异步请求 /api/dashboard 渲染看板 KPI、ECharts 走势图与数据治理表
+      try {
+        loadDashboardData();
+      } catch (err) {
+        console.error('看板数据加载失败:', err);
+      }
     });
   </script>
 </body>
