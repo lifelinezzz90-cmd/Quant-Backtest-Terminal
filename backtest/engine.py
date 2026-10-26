@@ -123,11 +123,11 @@ def load_cleaned_data(sample: bool = False,
         is_susp = (merged["volume"] <= 0.0) | merged.get("is_suspended", pd.Series([False]*len(merged))).fillna(True)
         merged["is_suspended"] = is_susp.astype(bool)
 
-        # 基于前复权与 9.85% 阈值重构涨跌停列 (修复 Major 6)
+        # 基于前复权与 10% 涨跌停限制重构涨跌停列
         prev_close = merged["close"].shift(1).bfill()
         merged["prev_close"] = prev_close
-        merged["up_limit"] = (prev_close * 1.0985).round(4)
-        merged["down_limit"] = (prev_close * 0.9015).round(4)
+        merged["up_limit"] = (prev_close * 1.10).round(2)
+        merged["down_limit"] = (prev_close * 0.90).round(2)
         stock_dict[code] = merged.sort_values("date").reset_index(drop=True)
 
     return stock_dict, benchmark_df
@@ -331,10 +331,8 @@ class BacktestEngine:
                         })
                         continue
 
-                    # 跌停拦截：开盘一字跌停或低于跌停价 (跌幅 <= -9.85%)，无法卖出
-                    is_limit_down = (open_p <= down_l)
-                    if not is_limit_down and "prev_close" in bar and bar["prev_close"] > 0:
-                        is_limit_down = (open_p <= bar["prev_close"] * 0.9015)
+                    # 跌停拦截：开盘一字跌停或低于跌停价 (跌幅 <= -10%)，无法卖出
+                    is_limit_down = (open_p <= down_l + 1e-4) or (bar.get("prev_close", 0) > 0 and open_p <= round(bar["prev_close"] * 0.90, 2) + 1e-4)
 
                     if is_limit_down:
                         pending_rebalance[code] = True
@@ -409,10 +407,8 @@ class BacktestEngine:
                         })
                         continue
 
-                    # 涨停拦截：开盘一字涨停或达到涨停价 (涨幅 >= 9.85%)，无法买入
-                    is_limit_up = (open_p >= up_l)
-                    if not is_limit_up and "prev_close" in bar and bar["prev_close"] > 0:
-                        is_limit_up = (open_p >= bar["prev_close"] * 1.0985)
+                    # 涨停拦截：开盘一字涨停或达到涨停价 (涨幅 >= 10%)，无法买入
+                    is_limit_up = (open_p >= up_l - 1e-4) or (bar.get("prev_close", 0) > 0 and open_p >= round(bar["prev_close"] * 1.10, 2) - 1e-4)
 
                     if is_limit_up:
                         pending_rebalance[code] = True

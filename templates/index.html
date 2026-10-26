@@ -581,10 +581,10 @@
               <span>趋势跟踪最优 (TF_5_40_5)</span>
             </button>
             <button onclick="applyPreset('MF')" id="presetBtn_MF" class="preset-pill preset-pill-inactive">
-              <span>多因子打分 (MF_20_M6V2S2)</span>
+              <span>多因子打分 (MF_20_M5V5S0)</span>
             </button>
             <button onclick="applyPreset('MR')" id="presetBtn_MR" class="preset-pill preset-pill-inactive">
-              <span>均值回复 (MR_15_1.8)</span>
+              <span>均值回复 (MR_20_1.5_0.0)</span>
             </button>
           </div>
         </div>
@@ -799,7 +799,7 @@
                   <td class="py-2 text-text-fog whitespace-nowrap">TF_5_40_5</td>
                   <td class="py-2 text-right text-emerald-400 font-medium tabular-nums whitespace-nowrap">+13.87%</td>
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">0.9546</td>
-                  <td class="py-2 text-right text-primary tabular-nums whitespace-nowrap">-11.89%</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-11.89%</td>
                   <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-brand-indigo-dim text-primary text-[10px]">Rank #1</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
@@ -807,10 +807,10 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
                     <span>多因子打分 (MultiFactor)</span>
                   </td>
-                  <td class="py-2 text-text-fog whitespace-nowrap">MF_20_M6V2S2</td>
-                  <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+14.34%</td>
-                  <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">0.8872</td>
-                  <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">-14.20%</td>
+                  <td class="py-2 text-text-fog whitespace-nowrap">MF_20_M5V5S0</td>
+                  <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+8.40%</td>
+                  <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">0.2984</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-13.51%</td>
                   <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #2</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
@@ -818,10 +818,10 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
                     <span>均值回复 (MeanReversion)</span>
                   </td>
-                  <td class="py-2 text-text-fog whitespace-nowrap">MR_15_1.8</td>
-                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+9.15%</td>
-                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">0.6120</td>
-                  <td class="py-2 text-right text-red-400 tabular-nums whitespace-nowrap">-19.45%</td>
+                  <td class="py-2 text-text-fog whitespace-nowrap">MR_20_1.5_0.0</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+5.17%</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-0.0126</td>
+                  <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-10.69%</td>
                   <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #3</span></td>
                 </tr>
               </tbody>
@@ -1055,15 +1055,15 @@
       ],
       MultiFactor: [
         { id: 'lookback_days', label: '回看周期 (lookback_days)', unit: 'DAY', type: 'number', min: 5, max: 120, default: 20 },
-        { id: 'momentum_weight', label: '动量权重 (momentum_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.6 },
-        { id: 'volatility_weight', label: '低波权重 (volatility_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.2 },
-        { id: 'sentiment_weight', label: '舆情权重 (sentiment_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.2 }
+        { id: 'momentum_weight', label: '动量权重 (momentum_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.5 },
+        { id: 'volatility_weight', label: '低波权重 (volatility_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.5 },
+        { id: 'sentiment_weight', label: '量价反转权重 (reversal_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.0 }
       ],
       MeanReversion: [
-        { id: 'window', label: '布林周期 (window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 15 },
-        { id: 'num_std', label: '标准差倍数 (num_std)', unit: 'STD', type: 'number', step: 0.1, min: 0.5, max: 3.0, default: 1.8 },
+        { id: 'window', label: '布林周期 (window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 20 },
+        { id: 'num_std', label: '标准差倍数 (num_std)', unit: 'STD', type: 'number', step: 0.1, min: 0.5, max: 3.0, default: 1.5 },
         { id: 'exit_z', label: '平仓阈值 (exit_z)', unit: 'Z', type: 'number', step: 0.1, min: -1.0, max: 1.0, default: 0.0 },
-        { id: 'max_positions', label: '最大持仓数 (max_positions)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
+        { id: 'max_positions', label: '最大持仓数 (max_positions)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 6 }
       ]
     };
     PARAM_TEMPLATES['trend'] = PARAM_TEMPLATES['TrendFollowing'];
@@ -1115,10 +1115,10 @@
         renderDynamicParams('TrendFollowing', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
       } else if (presetType === 'MF') {
         if (stratSelect) stratSelect.value = 'MultiFactor';
-        renderDynamicParams('MultiFactor', { lookback_days: 20, momentum_weight: 0.6, volatility_weight: 0.2, sentiment_weight: 0.2 });
+        renderDynamicParams('MultiFactor', { lookback_days: 20, momentum_weight: 0.5, volatility_weight: 0.5, sentiment_weight: 0.0 });
       } else if (presetType === 'MR') {
         if (stratSelect) stratSelect.value = 'MeanReversion';
-        renderDynamicParams('MeanReversion', { window: 15, num_std: 1.8, exit_z: 0.0, max_positions: 8 });
+        renderDynamicParams('MeanReversion', { window: 20, num_std: 1.5, exit_z: 0.0, max_positions: 6 });
       }
     }
 
@@ -1544,6 +1544,45 @@
       }
     }
 
+    // Render Strategy Families Matrix
+    function renderStrategyFamilies(categoryBests) {
+      if (!categoryBests) return;
+      const tbody = document.getElementById('strategyFamiliesTableBody');
+      if (!tbody) return;
+
+      const configs = [
+        { key: 'TrendFollowing', label: '趋势跟踪 (TrendFollowing)', dotClass: 'bg-primary-container', rank: 'Rank #1', rankClass: 'bg-brand-indigo-dim text-primary' },
+        { key: 'MultiFactor', label: '多因子打分 (MultiFactor)', dotClass: 'bg-secondary', rank: 'Rank #2', rankClass: 'bg-surface-container-high text-text-fog' },
+        { key: 'MeanReversion', label: '均值回复 (MeanReversion)', dotClass: 'bg-outline', rank: 'Rank #3', rankClass: 'bg-surface-container-high text-text-fog' }
+      ];
+
+      let html = '';
+      configs.forEach(cfg => {
+        const item = categoryBests[cfg.key] || {};
+        const name = item.strategy_name || '-';
+        const annRet = item.full_annual_return !== undefined ? ((item.full_annual_return >= 0 ? '+' : '') + (item.full_annual_return * 100).toFixed(2) + '%') : '-';
+        const oosSharpe = item.oos_sharpe !== undefined ? Number(item.oos_sharpe).toFixed(4) : '-';
+        const oosDd = item.oos_max_drawdown !== undefined ? ('-' + Math.abs(item.oos_max_drawdown * 100).toFixed(2) + '%') : '-';
+        const annColor = item.full_annual_return >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const sharpeColor = item.oos_sharpe >= 0.5 ? 'text-emerald-400' : (item.oos_sharpe >= 0 ? 'text-text-on-dark' : 'text-text-fog');
+
+        html += `
+          <tr class="hover:bg-surface-bright/20">
+            <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
+              <span class="w-1.5 h-1.5 rounded-full ${cfg.dotClass}"></span>
+              <span>${cfg.label}</span>
+            </td>
+            <td class="py-2 text-text-fog whitespace-nowrap">${name}</td>
+            <td class="py-2 text-right ${annColor} font-medium tabular-nums whitespace-nowrap">${annRet}</td>
+            <td class="py-2 text-right ${sharpeColor} tabular-nums whitespace-nowrap">${oosSharpe}</td>
+            <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">${oosDd}</td>
+            <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded ${cfg.rankClass} text-[10px]">${cfg.rank}</span></td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
     // Load All Dashboard Data from Flask API
     async function loadDashboardData() {
       try {
@@ -1559,6 +1598,9 @@
 
         // Render Rolling 3-Fold Cards
         renderRolling3Fold(dashboardData.rolling_3fold);
+
+        // Render Strategy Families Matrix
+        renderStrategyFamilies(dashboardData.category_bests);
 
         // Render Data Governance Table
         renderDataGovernanceTable(dashboardData.validation);

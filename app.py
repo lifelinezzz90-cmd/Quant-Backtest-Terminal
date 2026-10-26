@@ -371,7 +371,9 @@ def handle_backtest(args):
         stock_count=len(available_stocks),
         equity_df=equity_df,
         trades_df=trades_df,
-        chart_path=chart_path
+        chart_path=chart_path,
+        data_dict=stock_dict,
+        benchmark_df=benchmark_df
     )
     exp_id = rec_data.get("experiment_id", "")
 
@@ -572,9 +574,10 @@ def api_dashboard():
             "bm_sharpe": f3_bm,
             "excess": round(f3_strat - f3_bm, 4),
             "pass": bool(f3_strat > 0 and f3_strat >= f3_bm)
-        },
-        "overall_pass": "3/3 (100%)"
+        }
     }
+    pass_cnt = sum(1 for f in [rolling_3fold["fold1"], rolling_3fold["fold2"], rolling_3fold["fold3"]] if f["pass"])
+    rolling_3fold["overall_pass"] = f"{pass_cnt}/3 ({int(pass_cnt / 3 * 100)}%)"
 
     return jsonify({
         "success": True,
@@ -633,7 +636,9 @@ def api_backtest():
         stock_count=len(stocks),
         equity_df=eq_df,
         trades_df=res["trades_df"],
-        chart_path=chart_path
+        chart_path=chart_path,
+        data_dict=stocks,
+        benchmark_df=bm
     )
 
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()

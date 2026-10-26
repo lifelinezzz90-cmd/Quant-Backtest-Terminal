@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
+import numpy as np
 import pandas as pd
 
 from backtest.config import (
@@ -25,7 +26,6 @@ from backtest.config import (
     ANNUAL_TRADING_DAYS,
     RISK_FREE_RATE
 )
-import numpy as np
 
 # 严格与 backtest/optimizer.py 统一的 25 列标准实验记录 Schema (修复 B5)
 RECORD_COLUMNS = [
@@ -109,6 +109,60 @@ def determine_strategy_type(strategy_name: str, params: Dict[str, Any]) -> str:
     return "CustomStrategy"
 
 
+_DATA_CACHE = None
+
+
+def _get_eval_data():
+    """获取并缓存全量清洗数据，供独立分段评估使用"""
+    global _DATA_CACHE
+    if _DATA_CACHE is None:
+        try:
+            from backtest.engine import load_cleaned_data
+            _DATA_CACHE = load_cleaned_data(sample=False)
+        except Exception:
+            _DATA_CACHE = (None, None)
+    return _DATA_CACHE
+
+
+def create_eval_strategy(strat_type: str, params: Dict[str, Any]):
+    """创建用于独立分段评估的策略实例"""
+    from strategies.trend_following import TrendFollowingStrategy
+    from strategies.mean_reversion import MeanReversionStrategy
+    from strategies.multi_factor import MultiFactorStrategy
+    if strat_type == "TrendFollowing":
+        p = {
+            "short_window": int(params.get("short_window", 5)),
+            "long_window": int(params.get("long_window", 40)),
+            "rebalance_days": int(params.get("rebalance_days", 5)),
+            "max_positions": int(params.get("max_positions", 8))
+        }
+        return TrendFollowingStrategy(name=f"TF_{p['short_window']}_{p['long_window']}_{p['rebalance_days']}", **p)
+    elif strat_type == "MeanReversion":
+        p = {
+            "window": int(params.get("window", 20)),
+            "num_std": float(params.get("num_std", 1.8)),
+            "exit_z": float(params.get("exit_z", 0.0)),
+            "max_positions": int(params.get("max_positions", 8))
+        }
+        return MeanReversionStrategy(name=f"MR_{p['window']}_{p['num_std']}_{p['exit_z']}", **p)
+    elif strat_type == "MultiFactor":
+        lb = int(params.get("lookback_days", 20))
+        mw = float(params.get("momentum_weight", 0.6))
+        vw = float(params.get("volatility_weight", 0.2))
+        sw = float(params.get("sentiment_weight", 0.2))
+        reb = int(params.get("rebalance_days", 5))
+        top = int(params.get("top_n", params.get("top_k", 8)))
+        m = int(round(mw * 10))
+        v = int(round(vw * 10))
+        s = int(round(sw * 10))
+        return MultiFactorStrategy(
+            lookback_days=lb, momentum_weight=mw, volatility_weight=vw, sentiment_weight=sw,
+            rebalance_days=reb, top_n=top, name=f"MF_{lb}_M{m}V{v}S{s}"
+        )
+    else:
+        return TrendFollowingStrategy(params=params)
+
+
 def log_experiment_record(
     strategy_name: str,
     params: Dict[str, Any],
@@ -117,7 +171,9 @@ def log_experiment_record(
     equity_df: Optional[pd.DataFrame] = None,
     trades_df: Optional[pd.DataFrame] = None,
     chart_path: Optional[Path] = None,
-    period_type: Optional[str] = None
+    period_type: Optional[str] = None,
+    data_dict: Optional[Dict[str, pd.DataFrame]] = None,
+    benchmark_df: Optional[pd.DataFrame] = None
 ) -> Dict[str, Any]:
     """
     将单次实验结果标准化为 25 列 Schema 追加落盘至 records/对比结果.csv，并保存明细文件
@@ -137,29 +193,104 @@ def log_experiment_record(
         equity_df.to_csv(detail_filepath, index=False, encoding="utf-8-sig")
 
     # 2. 计算各切片指标 (IS: 2019-2022, OOS: 2023-2024, 3-Folds)
-    is_ann, is_dd, is_sh, is_cal, is_wr = _slice_equity_metrics(equity_df, trades_df, "2019-01-01", "2022-12-31")
-    oos_ann, oos_dd, oos_sh, oos_cal, oos_wr = _slice_equity_metrics(equity_df, trades_df, "2023-01-01", "2024-12-31")
-    f1_ann, _, f1_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2023-01-01", "2023-08-31")
-    f2_ann, _, f2_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2023-09-01", "2024-04-30")
-    f3_ann, _, f3_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2024-05-01", "2024-12-31")
-
-    # 若回测未覆盖样本外，以传入 metrics 填充
-    if oos_ann == 0.0 and oos_sh == 0.0:
-        oos_ann = round(metrics.get("annual_return", 0.0), 4)
-        oos_dd = round(metrics.get("max_drawdown", 0.0), 4)
-        oos_sh = round(metrics.get("sharpe_ratio", 0.0), 4)
-        oos_cal = round(metrics.get("calmar_ratio", 0.0), 4)
-        oos_wr = round(metrics.get("win_rate", 0.0), 4)
-
-    # 三折验证判定
+    # 优先采用与 optimizer.py 完全统一的独立引擎分段回测口径，确保 CLI 回测追加行与寻优结果 100% 精确一致
     bm_fold_sharpes = {"f1": -0.4326, "f2": -0.6269, "f3": 0.5104}
-    oos_3fold_pass = bool(
-        f1_ann > 0 and f2_ann > 0 and f3_ann > 0 and
-        f1_sh > 0 and f2_sh > 0 and f3_sh > 0 and
-        f1_sh >= bm_fold_sharpes["f1"] and
-        f2_sh >= bm_fold_sharpes["f2"] and
-        f3_sh >= bm_fold_sharpes["f3"]
-    )
+    evaluated_independently = False
+
+    if data_dict is None or benchmark_df is None:
+        cached_stocks, cached_bm = _get_eval_data()
+        if data_dict is None:
+            data_dict = cached_stocks
+        if benchmark_df is None:
+            benchmark_df = cached_bm
+
+    if data_dict is not None and benchmark_df is not None:
+        try:
+            from backtest.engine import BacktestEngine
+            from backtest.metrics import calculate_metrics
+
+            eval_engine = BacktestEngine(initial_cash=1_000_000.0)
+            strat_inst = create_eval_strategy(strat_type, params)
+
+            # (A) 样本内 (IS: 2019-2022)
+            res_is = eval_engine.run(strat_inst, data_dict, start_date="2019-01-01", end_date="2022-12-31")
+            m_is = calculate_metrics(res_is["equity_df"], benchmark_df, res_is["trades_df"])
+
+            # (B) 样本外 (OOS: 2023-2024)
+            res_oos = eval_engine.run(strat_inst, data_dict, start_date="2023-01-01", end_date="2024-12-31")
+            m_oos = calculate_metrics(res_oos["equity_df"], benchmark_df, res_oos["trades_df"])
+
+            # (C) 样本外三折滚动
+            res_f1 = eval_engine.run(strat_inst, data_dict, start_date="2023-01-01", end_date="2023-08-31")
+            m_f1 = calculate_metrics(res_f1["equity_df"], benchmark_df, res_f1["trades_df"])
+
+            res_f2 = eval_engine.run(strat_inst, data_dict, start_date="2023-09-01", end_date="2024-04-30")
+            m_f2 = calculate_metrics(res_f2["equity_df"], benchmark_df, res_f2["trades_df"])
+
+            res_f3 = eval_engine.run(strat_inst, data_dict, start_date="2024-05-01", end_date="2024-12-31")
+            m_f3 = calculate_metrics(res_f3["equity_df"], benchmark_df, res_f3["trades_df"])
+
+            is_ann = m_is["annual_return"]
+            is_dd = m_is["max_drawdown"]
+            is_sh = m_is["sharpe_ratio"]
+            is_cal = m_is["calmar_ratio"]
+            is_wr = m_is["win_rate"]
+
+            oos_ann = m_oos["annual_return"]
+            oos_dd = m_oos["max_drawdown"]
+            oos_sh = m_oos["sharpe_ratio"]
+            oos_cal = m_oos["calmar_ratio"]
+            oos_wr = m_oos["win_rate"]
+
+            f1_sh = m_f1["sharpe_ratio"]
+            f2_sh = m_f2["sharpe_ratio"]
+            f3_sh = m_f3["sharpe_ratio"]
+
+            pass_f1 = (m_f1["annual_return"] > 0) and (f1_sh > 0) and (f1_sh >= bm_fold_sharpes["f1"])
+            pass_f2 = (m_f2["annual_return"] > 0) and (f2_sh > 0) and (f2_sh >= bm_fold_sharpes["f2"])
+            pass_f3 = (m_f3["annual_return"] > 0) and (f3_sh > 0) and (f3_sh >= bm_fold_sharpes["f3"])
+            oos_3fold_pass = bool(pass_f1 and pass_f2 and pass_f3)
+
+            rank_score = round(
+                oos_sh * 0.40 +
+                is_sh * 0.20 +
+                oos_cal * 0.20 +
+                (1.0 if oos_3fold_pass else -0.5) * 0.20,
+                4
+            )
+            evaluated_independently = True
+        except Exception:
+            evaluated_independently = False
+
+    if not evaluated_independently:
+        is_ann, is_dd, is_sh, is_cal, is_wr = _slice_equity_metrics(equity_df, trades_df, "2019-01-01", "2022-12-31")
+        oos_ann, oos_dd, oos_sh, oos_cal, oos_wr = _slice_equity_metrics(equity_df, trades_df, "2023-01-01", "2024-12-31")
+        f1_ann, _, f1_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2023-01-01", "2023-08-31")
+        f2_ann, _, f2_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2023-09-01", "2024-04-30")
+        f3_ann, _, f3_sh, _, _ = _slice_equity_metrics(equity_df, trades_df, "2024-05-01", "2024-12-31")
+
+        if oos_ann == 0.0 and oos_sh == 0.0:
+            oos_ann = round(metrics.get("annual_return", 0.0), 4)
+            oos_dd = round(metrics.get("max_drawdown", 0.0), 4)
+            oos_sh = round(metrics.get("sharpe_ratio", 0.0), 4)
+            oos_cal = round(metrics.get("calmar_ratio", 0.0), 4)
+            oos_wr = round(metrics.get("win_rate", 0.0), 4)
+
+        oos_3fold_pass = bool(
+            f1_ann > 0 and f2_ann > 0 and f3_ann > 0 and
+            f1_sh > 0 and f2_sh > 0 and f3_sh > 0 and
+            f1_sh >= bm_fold_sharpes["f1"] and
+            f2_sh >= bm_fold_sharpes["f2"] and
+            f3_sh >= bm_fold_sharpes["f3"]
+        )
+
+        rank_score = round(
+            oos_sh * 0.40 +
+            is_sh * 0.20 +
+            oos_cal * 0.20 +
+            (1.0 if oos_3fold_pass else -0.5) * 0.20,
+            4
+        )
 
     full_ann = round(metrics.get("annual_return", 0.0), 4)
     full_dd = round(metrics.get("max_drawdown", 0.0), 4)
@@ -167,14 +298,6 @@ def log_experiment_record(
     full_cal = round(metrics.get("calmar_ratio", 0.0), 4)
     full_wr = round(metrics.get("win_rate", 0.0), 4)
     trade_count = int(metrics.get("trade_count", len(trades_df) if trades_df is not None else 0))
-
-    rank_score = round(
-        oos_sh * 0.40 +
-        is_sh * 0.20 +
-        oos_cal * 0.20 +
-        (1.0 if oos_3fold_pass else -0.5) * 0.20,
-        4
-    )
 
     # 3. 构造与 optimizer.py 100% 对齐的 25 列字典
     record_data = {
