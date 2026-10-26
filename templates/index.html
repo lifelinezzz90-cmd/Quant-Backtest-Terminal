@@ -9,8 +9,6 @@
   <link href="https://fonts.googleapis.com" rel="preconnect"/>
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <!-- Material Symbols Outlined -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
@@ -83,11 +81,9 @@
     html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-      vertical-align: middle;
-      display: inline-block;
-      line-height: 1;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* ==========================================================================
@@ -455,7 +451,7 @@
     <!-- Left Cluster: Brand Glyph + Terminal Identity -->
     <div class="flex items-center space-x-3">
       <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-raised border border-outline-variant/30 text-primary shadow-inner">
-        <span class="material-symbols-outlined text-primary-container" style="font-size: 20px;">query_stats</span>
+        <span class="text-primary-container font-black text-lg">Q</span>
       </div>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2">
@@ -482,14 +478,13 @@
       </div>
 
       <!-- Theme Switch Button -->
-      <button id="themeToggleBtn" onclick="toggleTheme()" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark text-xs flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap">
-        <span class="material-symbols-outlined text-sm" id="themeIcon">dark_mode</span>
-        <span id="themeLabel">深色终端</span>
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark text-xs flex items-center justify-center shadow-sm transition-all cursor-pointer whitespace-nowrap">
+        <span id="themeLabel">🌙 深色终端</span>
       </button>
 
       <!-- Quick Reset / Reload -->
-      <button onclick="loadDashboardData()" title="刷新数据" class="w-8 h-8 rounded-full bg-surface-raised border border-outline-variant/20 flex items-center justify-center text-text-fog hover:text-text-on-dark hover:border-primary-container transition-all">
-        <span class="material-symbols-outlined text-base">refresh</span>
+      <button onclick="loadDashboardData()" title="刷新数据" class="h-8 px-3 rounded-full bg-surface-raised border border-outline-variant/30 text-text-fog hover:text-text-on-dark text-xs flex items-center justify-center transition-all cursor-pointer whitespace-nowrap">
+        刷新
       </button>
     </div>
   </header>
@@ -583,7 +578,6 @@
         <!-- Chart Header & Strategy Variant Pills -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/15">
           <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-primary-container">show_chart</span>
             <h2 class="text-base font-semibold text-text-on-dark whitespace-nowrap">累计净值与水下动态回撤</h2>
             <span class="text-xs text-text-fog ml-1 whitespace-nowrap" id="currentStrategyTag">TrendFollowing TF_5_40_5</span>
           </div>
@@ -637,7 +631,6 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
             <div class="flex items-center space-x-2">
-              <span class="material-symbols-outlined text-primary">instant_mix</span>
               <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">策略参数配置与回测引擎</h3>
             </div>
             <span class="text-[11px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20 whitespace-nowrap font-medium">Ready</span>
@@ -652,12 +645,11 @@
                 <span class="text-[11px] text-primary whitespace-nowrap font-normal">已收敛68组寻优</span>
               </label>
               <div class="relative">
-                <select id="strategySelect" onchange="onStrategySelectChange()" class="w-full h-9 pl-3 pr-8 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark text-xs focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-all appearance-none cursor-pointer">
-                  <option value="trend">趋势跟踪双均线模型 (TrendFollowing)</option>
-                  <option value="multi_factor">多因子加权打分模型 (MultiFactor)</option>
-                  <option value="mean_reversion">均值回复通道突破 (MeanReversion)</option>
+                <select id="strategySelect" onchange="onStrategySelectChange()" class="w-full h-9 pl-3 pr-8 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark text-xs focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-all cursor-pointer">
+                  <option value="TrendFollowing">趋势跟踪双均线模型 (TrendFollowing)</option>
+                  <option value="MultiFactor">多因子加权打分模型 (MultiFactor)</option>
+                  <option value="MeanReversion">均值回复布林突破 (MeanReversion)</option>
                 </select>
-                <span class="material-symbols-outlined absolute right-2.5 top-2.5 text-text-fog pointer-events-none text-base">expand_more</span>
               </div>
             </div>
 
@@ -677,18 +669,16 @@
 
             <!-- Action Buttons -->
             <div class="pt-2 space-y-2">
-              <button id="btnRunBacktest" type="submit" class="w-full h-10 rounded-full bg-primary-container hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-base" id="runIcon">bolt</span>
+              <button id="btnRunBacktest" type="submit" class="w-full h-10 rounded-full bg-primary-container hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-md transition-all cursor-pointer">
+                <span id="btnRunSpinner"></span>
                 <span id="runText">立即运行高保真回测 (Run Backtest)</span>
               </button>
 
               <div class="grid grid-cols-2 gap-2">
-                <button onclick="applyPreset('TF')" type="button" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center space-x-1 transition-colors cursor-pointer">
-                  <span class="material-symbols-outlined text-sm">restart_alt</span>
+                <button onclick="applyPreset('TF')" type="button" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center transition-colors cursor-pointer">
                   <span class="whitespace-nowrap">重置基准 (TF)</span>
                 </button>
-                <a href="/api/export_csv" download="对比结果.csv" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center space-x-1 transition-colors text-center cursor-pointer">
-                  <span class="material-symbols-outlined text-sm">file_download</span>
+                <a href="/api/export_csv" download="对比结果.csv" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center transition-colors text-center cursor-pointer">
                   <span class="whitespace-nowrap">导出对比 CSV</span>
                 </a>
               </div>
@@ -699,7 +689,6 @@
         <!-- A-Share Realistic Market Microstructure Constraints -->
         <div class="pt-3 border-t border-outline-variant/15 space-y-1.5">
           <div class="flex items-center space-x-1.5 text-xs text-text-on-dark font-medium">
-            <span class="material-symbols-outlined text-xs text-secondary">verified_user</span>
             <span>A股交易机制高拟真约束</span>
           </div>
           <ul class="text-[11px] text-text-fog space-y-1 pl-1">
@@ -728,7 +717,6 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
             <div class="flex items-center space-x-2">
-              <span class="material-symbols-outlined text-emerald-400">fact_check</span>
               <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">样本外三折滚动交叉验证</h3>
             </div>
             <span class="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap font-medium" id="badge3Fold">3/3 全胜基准</span>
@@ -856,7 +844,6 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 border-b border-outline-variant/15">
             <div class="flex items-center space-x-2">
-              <span class="material-symbols-outlined text-secondary">database</span>
               <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">数据治理清洗与等比前复权核验</h3>
             </div>
             <span class="text-xs text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap font-medium">ETL Pipeline v2.4</span>
@@ -864,9 +851,8 @@
 
           <!-- Highlight Banner: Critical Bug Fix in Public Open-Source APIs -->
           <div class="mt-3 warning-banner">
-            <span class="material-symbols-outlined text-base shrink-0 mt-0.5 warning-icon">warning</span>
             <div>
-              <strong class="font-semibold">底层复权失真核验修正：</strong>
+              <strong class="font-semibold">【底层复权核验修正】</strong>
               发现部分公开行情接口在处理大额现金分红时错误采用<strong>简单减法复权</strong>，导致股价在除权日出现虚假暴涨（例如<strong>中国平安 2019-02-25</strong> 真实涨幅 <strong>+8.22%</strong> 被错误放大为 <strong>+12.37%</strong>）。终端已重构严格的<strong>等比几何前复权序列</strong>，消除由于除息导致的虚假动量未来函数。
             </div>
           </div>
@@ -914,7 +900,6 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
         <div class="space-y-0.5">
           <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-primary-container">dataset</span>
             <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">68组全网格参数寻优实验库</h3>
             <span class="text-xs text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap num">records/对比结果.csv</span>
           </div>
@@ -933,18 +918,16 @@
 
           <!-- Sort Select -->
           <div class="relative">
-            <select id="sortSelect" onchange="renderExperimentsTable()" class="h-8 pl-2.5 pr-7 rounded-lg bg-surface-container-high border border-outline-variant/30 text-xs text-text-on-dark appearance-none focus:outline-none focus:border-primary-container cursor-pointer num">
+            <select id="sortSelect" onchange="renderExperimentsTable()" class="h-8 pl-2.5 pr-7 rounded-lg bg-surface-container-high border border-outline-variant/30 text-xs text-text-on-dark focus:outline-none focus:border-primary-container cursor-pointer num">
               <option value="oos_sharpe_desc">按样本外夏普排序 ↓</option>
               <option value="full_annual_return_desc">按全周期年化排序 ↓</option>
               <option value="oos_max_drawdown_asc">按样本外最大回撤排序 ↑</option>
               <option value="oos_3fold_pass_desc">按三折验证通过率排序</option>
             </select>
-            <span class="material-symbols-outlined absolute right-1.5 top-2 text-text-fog pointer-events-none text-xs">expand_more</span>
           </div>
 
           <!-- Export CSV Button Pill -->
-          <a href="/api/export_csv" download="对比结果.csv" class="h-8 px-3 rounded-full bg-brand-indigo-dim hover:bg-brand-indigo-dim/80 text-primary border border-primary/30 text-xs flex items-center space-x-1 transition-all cursor-pointer whitespace-nowrap font-medium">
-            <span class="material-symbols-outlined text-sm">download</span>
+          <a href="/api/export_csv" download="对比结果.csv" class="h-8 px-3 rounded-full bg-brand-indigo-dim hover:bg-brand-indigo-dim/80 text-primary border border-primary/30 text-xs flex items-center justify-center transition-all cursor-pointer whitespace-nowrap font-medium">
             <span>导出 CSV</span>
           </a>
         </div>
@@ -1039,22 +1022,27 @@
     }
 
     function applyTheme(theme) {
-      const htmlEl = document.documentElement;
-      const themeIcon = document.getElementById('themeIcon');
-      const themeLabel = document.getElementById('themeLabel');
+    function safeSetText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (text !== undefined && text !== null) ? text : '';
+    }
+    function safeSetHTML(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = (html !== undefined && html !== null) ? html : '';
+    }
 
+    function applyTheme(theme) {
+      const htmlEl = document.documentElement;
       if (theme === 'light') {
         htmlEl.classList.remove('dark');
         htmlEl.classList.add('light');
         htmlEl.setAttribute('data-theme', 'light');
-        if (themeIcon) themeIcon.textContent = 'light_mode';
-        if (themeLabel) themeLabel.textContent = '浅色研报';
+        safeSetText('themeLabel', '☀️ 浅色研报');
       } else {
         htmlEl.classList.remove('light');
         htmlEl.classList.add('dark');
         htmlEl.setAttribute('data-theme', 'dark');
-        if (themeIcon) themeIcon.textContent = 'dark_mode';
-        if (themeLabel) themeLabel.textContent = '深色终端';
+        safeSetText('themeLabel', '🌙 深色终端');
       }
 
       // Re-render chart with adapted palette if data exists
@@ -1065,29 +1053,33 @@
 
     // Dynamic Parameter Templates
     const PARAM_TEMPLATES = {
-      trend: [
-        { id: 'short_window', label: '短期均线 (Fast MA)', unit: 'DAY', type: 'number', min: 2, max: 60, default: 5 },
-        { id: 'long_window', label: '长期均线 (Slow MA)', unit: 'DAY', type: 'number', min: 10, max: 250, default: 40 },
-        { id: 'rebalance_days', label: '调仓周期 (Rebalance)', unit: 'T+N', type: 'number', min: 1, max: 30, default: 5 },
-        { id: 'max_positions', label: '最大持仓数 (Max Pos)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
+      TrendFollowing: [
+        { id: 'short_window', label: '短期均线 (short_window)', unit: 'DAY', type: 'number', min: 2, max: 60, default: 5 },
+        { id: 'long_window', label: '长期均线 (long_window)', unit: 'DAY', type: 'number', min: 10, max: 250, default: 40 },
+        { id: 'rebalance_days', label: '调仓周期 (rebalance_days)', unit: 'T+N', type: 'number', min: 1, max: 30, default: 5 },
+        { id: 'max_positions', label: '最大持仓数 (max_positions)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
       ],
-      multi_factor: [
-        { id: 'w_momentum', label: '动量因子权重 (Mom)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.6 },
-        { id: 'w_volatility', label: '低波因子权重 (Vol)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.2 },
-        { id: 'w_size', label: '小市值权重 (Size)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1, default: 0.2 },
-        { id: 'rebalance_days', label: '调仓周期 (Rebalance)', unit: 'T+N', type: 'number', min: 1, max: 30, default: 20 }
+      MultiFactor: [
+        { id: 'lookback_days', label: '回看周期 (lookback_days)', unit: 'DAY', type: 'number', min: 5, max: 120, default: 20 },
+        { id: 'momentum_weight', label: '动量权重 (momentum_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.6 },
+        { id: 'volatility_weight', label: '低波权重 (volatility_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.2 },
+        { id: 'sentiment_weight', label: '舆情权重 (sentiment_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.2 }
       ],
-      mean_reversion: [
-        { id: 'window', label: '均线统计周期 (Window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 15 },
-        { id: 'num_std', label: '布林突破倍数 (Num Std)', unit: 'STD', type: 'number', step: 0.1, min: 1.0, max: 3.0, default: 1.8 },
-        { id: 'exit_z', label: '平仓阈值 (Exit Z)', unit: 'Z', type: 'number', step: 0.1, min: -1.0, max: 1.0, default: 0.0 },
-        { id: 'max_positions', label: '最大持仓数 (Max Pos)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
+      MeanReversion: [
+        { id: 'window', label: '布林周期 (window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 15 },
+        { id: 'num_std', label: '标准差倍数 (num_std)', unit: 'STD', type: 'number', step: 0.1, min: 0.5, max: 3.0, default: 1.8 },
+        { id: 'exit_z', label: '平仓阈值 (exit_z)', unit: 'Z', type: 'number', step: 0.1, min: -1.0, max: 1.0, default: 0.0 },
+        { id: 'max_positions', label: '最大持仓数 (max_positions)', unit: 'TOP', type: 'number', min: 1, max: 10, default: 8 }
       ]
     };
+    PARAM_TEMPLATES['trend'] = PARAM_TEMPLATES['TrendFollowing'];
+    PARAM_TEMPLATES['multi_factor'] = PARAM_TEMPLATES['MultiFactor'];
+    PARAM_TEMPLATES['mean_reversion'] = PARAM_TEMPLATES['MeanReversion'];
 
     function renderDynamicParams(strategyKey, customValues = {}) {
       const container = document.getElementById('dynamicParamsContainer');
-      const schema = PARAM_TEMPLATES[strategyKey] || PARAM_TEMPLATES['trend'];
+      if (!container) return;
+      const schema = PARAM_TEMPLATES[strategyKey] || PARAM_TEMPLATES['TrendFollowing'];
 
       let html = '';
       schema.forEach(p => {
@@ -1108,7 +1100,7 @@
 
     function onStrategySelectChange() {
       const select = document.getElementById('strategySelect');
-      renderDynamicParams(select.value);
+      if (select) renderDynamicParams(select.value);
     }
 
     function applyPreset(presetType) {
@@ -1125,14 +1117,14 @@
 
       const stratSelect = document.getElementById('strategySelect');
       if (presetType === 'TF') {
-        stratSelect.value = 'trend';
-        renderDynamicParams('trend', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+        if (stratSelect) stratSelect.value = 'TrendFollowing';
+        renderDynamicParams('TrendFollowing', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
       } else if (presetType === 'MF') {
-        stratSelect.value = 'multi_factor';
-        renderDynamicParams('multi_factor', { w_momentum: 0.6, w_volatility: 0.2, w_size: 0.2, rebalance_days: 20 });
+        if (stratSelect) stratSelect.value = 'MultiFactor';
+        renderDynamicParams('MultiFactor', { lookback_days: 20, momentum_weight: 0.6, volatility_weight: 0.2, sentiment_weight: 0.2 });
       } else if (presetType === 'MR') {
-        stratSelect.value = 'mean_reversion';
-        renderDynamicParams('mean_reversion', { window: 15, num_std: 1.8, exit_z: 0.0, max_positions: 8 });
+        if (stratSelect) stratSelect.value = 'MeanReversion';
+        renderDynamicParams('MeanReversion', { window: 15, num_std: 1.8, exit_z: 0.0, max_positions: 8 });
       }
     }
 
@@ -1355,21 +1347,21 @@
     // Populate KPIs
     function updateKPIs(kpis) {
       if (!kpis) return;
-      document.getElementById('kpiAnnualReturn').textContent = fmtPct(kpis.annual_return);
-      document.getElementById('kpiExcessReturn').textContent = `▲ ${fmtPct(kpis.excess_annual_return)} 超额`;
-      document.getElementById('kpiFullAnnual').textContent = fmtPct(kpis.full_annual_return);
-      document.getElementById('kpiBenchmarkReturn').textContent = `基准沪深300: ${fmtPct(kpis.benchmark_annual_return)}`;
+      safeSetText('kpiAnnualReturn', fmtPct(kpis.annual_return));
+      safeSetText('kpiExcessReturn', `▲ ${fmtPct(kpis.excess_annual_return)} 超额`);
+      safeSetText('kpiFullAnnual', fmtPct(kpis.full_annual_return));
+      safeSetText('kpiBenchmarkReturn', `基准沪深300: ${fmtPct(kpis.benchmark_annual_return)}`);
 
-      document.getElementById('kpiMaxDrawdown').textContent = `-${Math.abs(kpis.max_drawdown * 100).toFixed(2)}%`;
-      document.getElementById('kpiFullDrawdown').textContent = `-${Math.abs(kpis.full_max_drawdown * 100).toFixed(2)}%`;
-      document.getElementById('kpiBenchmarkDrawdown').textContent = `基准最大: -${Math.abs(kpis.benchmark_max_drawdown * 100).toFixed(2)}%`;
+      safeSetText('kpiMaxDrawdown', `-${Math.abs(kpis.max_drawdown * 100).toFixed(2)}%`);
+      safeSetText('kpiFullDrawdown', `-${Math.abs(kpis.full_max_drawdown * 100).toFixed(2)}%`);
+      safeSetText('kpiBenchmarkDrawdown', `基准最大: -${Math.abs(kpis.benchmark_max_drawdown * 100).toFixed(2)}%`);
 
-      document.getElementById('kpiSharpeRatio').textContent = fmtNum(kpis.sharpe_ratio, 4);
-      document.getElementById('kpiCalmarRatio').textContent = fmtNum(kpis.calmar_ratio, 4);
-      document.getElementById('kpiFullSharpe').textContent = `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`;
+      safeSetText('kpiSharpeRatio', fmtNum(kpis.sharpe_ratio, 4));
+      safeSetText('kpiCalmarRatio', fmtNum(kpis.calmar_ratio, 4));
+      safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
 
-      document.getElementById('kpiWinRate').textContent = fmtPct(kpis.win_rate);
-      document.getElementById('kpiTradeCount').textContent = `共 ${Number(kpis.trade_count).toLocaleString()} 笔闭环`;
+      safeSetText('kpiWinRate', fmtPct(kpis.win_rate));
+      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔闭环`);
     }
 
     // Populate Data Governance Table
@@ -1438,11 +1430,11 @@
       const countMF = list.filter(e => e.strategy_type === 'MultiFactor').length;
       const countMR = list.filter(e => e.strategy_type === 'MeanReversion').length;
 
-      document.getElementById('countAll').textContent = countAll;
-      document.getElementById('countTF').textContent = countTF;
-      document.getElementById('countMF').textContent = countMF;
-      document.getElementById('countMR').textContent = countMR;
-      document.getElementById('lblTotalArchived').textContent = countAll;
+      safeSetText('countAll', countAll);
+      safeSetText('countTF', countTF);
+      safeSetText('countMF', countMF);
+      safeSetText('countMR', countMR);
+      safeSetText('lblTotalArchived', countAll);
 
       // Filter
       if (currentFilter !== 'ALL') {
@@ -1459,7 +1451,7 @@
         return 0;
       });
 
-      document.getElementById('lblShowingCount').textContent = `Showing 1 - ${list.length} of ${countAll} entries`;
+      safeSetText('lblShowingCount', `Showing 1 - ${list.length} of ${countAll} entries`);
 
       let html = '';
       list.forEach((item, idx) => {
@@ -1511,32 +1503,22 @@
       const f3 = rolling.fold3;
 
       if (f1) {
-        const elS1 = document.getElementById('fold1_strat_sharpe');
-        const elB1 = document.getElementById('fold1_bm_sharpe');
-        const elE1 = document.getElementById('fold1_excess');
-        if (elS1) elS1.textContent = (f1.strat_sharpe >= 0 ? '+' : '') + Number(f1.strat_sharpe).toFixed(2);
-        if (elB1) elB1.textContent = (f1.bm_sharpe >= 0 ? '+' : '') + Number(f1.bm_sharpe).toFixed(2);
-        if (elE1) elE1.textContent = (f1.excess >= 0 ? '+' : '') + Number(f1.excess).toFixed(2) + ' 超额Alpha';
+        safeSetText('fold1_strat_sharpe', (f1.strat_sharpe >= 0 ? '+' : '') + Number(f1.strat_sharpe).toFixed(2));
+        safeSetText('fold1_bm_sharpe', (f1.bm_sharpe >= 0 ? '+' : '') + Number(f1.bm_sharpe).toFixed(2));
+        safeSetText('fold1_excess', (f1.excess >= 0 ? '+' : '') + Number(f1.excess).toFixed(2) + ' 超额Alpha');
       }
       if (f2) {
-        const elS2 = document.getElementById('fold2_strat_sharpe');
-        const elB2 = document.getElementById('fold2_bm_sharpe');
-        const elE2 = document.getElementById('fold2_excess');
-        if (elS2) elS2.textContent = (f2.strat_sharpe >= 0 ? '+' : '') + Number(f2.strat_sharpe).toFixed(2);
-        if (elB2) elB2.textContent = (f2.bm_sharpe >= 0 ? '+' : '') + Number(f2.bm_sharpe).toFixed(2);
-        if (elE2) elE2.textContent = (f2.excess >= 0 ? '+' : '') + Number(f2.excess).toFixed(2) + ' 超额Alpha';
+        safeSetText('fold2_strat_sharpe', (f2.strat_sharpe >= 0 ? '+' : '') + Number(f2.strat_sharpe).toFixed(2));
+        safeSetText('fold2_bm_sharpe', (f2.bm_sharpe >= 0 ? '+' : '') + Number(f2.bm_sharpe).toFixed(2));
+        safeSetText('fold2_excess', (f2.excess >= 0 ? '+' : '') + Number(f2.excess).toFixed(2) + ' 超额Alpha');
       }
       if (f3) {
-        const elS3 = document.getElementById('fold3_strat_sharpe');
-        const elB3 = document.getElementById('fold3_bm_sharpe');
-        const elE3 = document.getElementById('fold3_excess');
-        if (elS3) elS3.textContent = (f3.strat_sharpe >= 0 ? '+' : '') + Number(f3.strat_sharpe).toFixed(2);
-        if (elB3) elB3.textContent = (f3.bm_sharpe >= 0 ? '+' : '') + Number(f3.bm_sharpe).toFixed(2);
-        if (elE3) elE3.textContent = (f3.excess >= 0 ? '+' : '') + Number(f3.excess).toFixed(2) + ' 超额Alpha';
+        safeSetText('fold3_strat_sharpe', (f3.strat_sharpe >= 0 ? '+' : '') + Number(f3.strat_sharpe).toFixed(2));
+        safeSetText('fold3_bm_sharpe', (f3.bm_sharpe >= 0 ? '+' : '') + Number(f3.bm_sharpe).toFixed(2));
+        safeSetText('fold3_excess', (f3.excess >= 0 ? '+' : '') + Number(f3.excess).toFixed(2) + ' 超额Alpha');
       }
       if (rolling.overall_pass) {
-        const badge = document.getElementById('badge3Fold');
-        if (badge) badge.textContent = rolling.overall_pass + ' 全胜基准';
+        safeSetText('badge3Fold', rolling.overall_pass + ' 全胜基准');
       }
     }
 
@@ -1570,27 +1552,40 @@
     // Run Custom Backtest via POST /api/backtest
     async function runCustomBacktest() {
       const btn = document.getElementById('btnRunBacktest');
-      const runIcon = document.getElementById('runIcon');
+      const spinner = document.getElementById('btnRunSpinner');
       const runText = document.getElementById('runText');
 
-      const strategyKey = document.getElementById('strategySelect').value;
-      const startDate = document.getElementById('inputStartDate').value.trim();
-      const endDate = document.getElementById('inputEndDate').value.trim();
+      const strategySelect = document.getElementById('strategySelect');
+      const strategyKey = strategySelect ? strategySelect.value : 'TrendFollowing';
+      const startInput = document.getElementById('inputStartDate');
+      const endInput = document.getElementById('inputEndDate');
+      const startDate = startInput ? startInput.value.trim() : '2019-01-02';
+      const endDate = endInput ? endInput.value.trim() : '2024-12-31';
 
       // Collect dynamic params
-      const schema = PARAM_TEMPLATES[strategyKey] || [];
+      const schema = PARAM_TEMPLATES[strategyKey] || PARAM_TEMPLATES['TrendFollowing'];
       const params = {};
       schema.forEach(p => {
         const input = document.getElementById(`param_${p.id}`);
         if (input) params[p.id] = Number(input.value);
       });
+      if (strategyKey === 'MultiFactor' || strategyKey === 'multi_factor') {
+        params.rebalance_days = params.rebalance_days || 5;
+        params.top_n = params.top_n || 8;
+        params.top_k = params.top_k || 8;
+      }
 
-      // UI Loading State
-      btn.disabled = true;
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
-      runIcon.textContent = 'hourglass_empty';
-      runIcon.classList.add('animate-spin');
-      runText.textContent = '回测撮合计算中...';
+      // UI Loading State with CSS Spinner Animation
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+      }
+      if (spinner) {
+        spinner.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span>';
+      }
+      if (runText) {
+        runText.textContent = '回测撮合计算中...';
+      }
 
       try {
         const resp = await fetch('/api/backtest', {
@@ -1605,9 +1600,9 @@
         });
 
         const res = await resp.json();
-        if (res.success) {
+        if (res && res.success) {
           // Update tag
-          document.getElementById('currentStrategyTag').textContent = `${res.strategy_name} (自定义回测)`;
+          safeSetText('currentStrategyTag', `${res.strategy_name} (自定义回测)`);
 
           // Smoothly update chart
           renderChart(res.chart_data);
@@ -1636,24 +1631,29 @@
             renderExperimentsTable();
           }
         } else {
-          alert('回测执行失败: ' + (res.error || '未知错误'));
+          alert('回测执行失败: ' + ((res && res.error) ? res.error : '未知错误'));
         }
       } catch (err) {
         console.error('回测请求异常:', err);
-        alert('回测请求异常，请查看终端控制台日志');
+        alert('回测请求异常: ' + (err && err.message ? err.message : String(err)));
       } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        runIcon.textContent = 'bolt';
-        runIcon.classList.remove('animate-spin');
-        runText.textContent = '立即运行高保真回测 (Run Backtest)';
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+        if (spinner) {
+          spinner.innerHTML = '';
+        }
+        if (runText) {
+          runText.textContent = '立即运行高保真回测 (Run Backtest)';
+        }
       }
     }
 
     // Initialize on DOM Ready
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
-      renderDynamicParams('trend', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+      renderDynamicParams('TrendFollowing', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
       loadDashboardData();
     });
   </script>

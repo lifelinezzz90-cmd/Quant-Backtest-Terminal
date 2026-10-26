@@ -67,6 +67,13 @@ class MultiFactorStrategy(BaseStrategy):
         actual_mom = lookback_days if lookback_days is not None else mom_window
         actual_vol = lookback_days if lookback_days is not None else vol_window
 
+        if params:
+            if "lookback_days" in params:
+                actual_mom = int(params["lookback_days"])
+                actual_vol = int(params["lookback_days"])
+            if "top_n" in params:
+                actual_top = int(params["top_n"])
+
         p = {
             "mom_window": int(params.get("mom_window", actual_mom)) if params else actual_mom,
             "vol_window": int(params.get("vol_window", actual_vol)) if params else actual_vol,

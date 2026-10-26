@@ -7,7 +7,11 @@
 - **当前阶段**：`Phase 0 ~ Phase 5 全流程圆满交付收官 (100% 验收就绪)`
 - **当前协作模式**：分层协作模式（高级模型顶层规划；Antigravity 次级实施 AI 严格对齐落地 Phase 0 ~ Phase 5 全套交付件）
 - **项目截止时间**：2026 年 11 月 3 日 22:00（FTP 压缩包上传，根目录直接打包且必须包含 `.git`、清洗后 `data/`、`strategy/strategy.json`、`records/对比结果.csv`）
-- **Phase 5 最终收官与交付成果**：
+- **Phase 5 最终收官与交互修复成果 (Latest)**：
+  - **全量 Material 图标英文代号根除**：彻底移除外网 Google Material Symbols 字体依赖，全面清理 HTML 与 JavaScript 中所有残存英文图标代号（`query_stats` 改为纯加粗大写 `Q` Logo，移除所有标题前的 `show_chart`、`instant_mix`、`fact_check` 等，移除按钮上的 `bolt`、`refresh`、`restart_alt`、`file_download`，移除下拉框内重叠的 `expand_more`）；回测 Loading 状态采用轻量纯 CSS 旋转动画圆环，彻底告别 360 度旋转的 `hourglass_empty` 英文单词。
+  - **三策略参数动态切换与容错打通**：前端参数面板随「趋势跟踪 (TrendFollowing)」、「多因子打分 (MultiFactor)」、「均值回复 (MeanReversion)」下拉与预设切换无缝动态更新 4 项核心参数；多因子策略对齐任务书绑定 `lookback_days`、`momentum_weight`、`volatility_weight`、`sentiment_weight`（自动附加 `rebalance_days=5, top_n=8`）；后端 `app.py` 与策略构造器健全类型过滤与默认值保护，杜绝参数类型转换与非法关键字异常。
+  - **DOM 操作空指针防御 (Null-Safety)**：前端封装 `safeSetText` / `safeSetHTML` 判空防护，彻底根治因标签更新引发的 `TypeError: Cannot set properties of null`，捕获异常时精准打印 `err.message`。
+  - **68 组实验基准防污染隔离**：`POST /api/backtest` 自定义回测独立归档运行数据至 `records/runs/`，严禁向 `records/对比结果.csv` 追加脏记录；首屏 `GET /api/dashboard` 永久加载全局最优 `TF_5_40_5`（年化 `+17.24%`、回撤 `-11.89%`、夏普 `0.9546`、胜率 `58.24%`），实验库恢复并永久保持纯净 68 行。
   - **可视化终端精修与双主题**：完成 `templates/index.html` 像素级排版对齐与防折行超框优化；顶栏实现「🌙 深色终端 / ☀️ 浅色研报」一键无缝双主题切换；布局采用 Grid 等高拉伸（`items-stretch`），彻底清除浅色模式所有深色容器残框（导航胶囊、三折卡片、黄色预警 Banner、输入框、下拉框与表格全量语义化配色修复）。
   - **数据治理表格首行防遮挡**：重构 `.sticky-table` 表头为实心不透明背景（深色 `#161b26` / 浅色 `#f1f5f9`），设置 `border-collapse: separate; border-spacing: 0;` 并规范表头内边距，彻底解决首行（万科A/贵州茅台）被表头遮挡的问题。
   - **Windows 中文字体回退根治**：彻底消除将中文元素赋予 `font-mono` / `font-metric-tabular` 导致的 Windows DirectWrite 回退至点阵新宋体（NSimSun）发虚发涩缺陷。确立全局界面中文字体栈为 `-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif !important;`，仅对纯数值与代码（`.num, code, .font-mono-num`）精准启用 `JetBrains Mono` 等宽字体。

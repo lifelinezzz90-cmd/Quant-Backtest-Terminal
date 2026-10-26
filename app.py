@@ -233,26 +233,61 @@ def handle_test(args):
 
 def get_strategy_instance(strategy_name: str, params: dict, available_stocks: list) -> BaseStrategy:
     """
-    根据策略名称与参数动态创建策略实例
+    根据策略名称与参数动态创建策略实例，严格进行参数合法性过滤与类型转换
     支持别名映射:
-    - trend / trend_following -> TrendFollowingStrategy
-    - mean_reversion / reversion / bollinger -> MeanReversionStrategy
-    - multi_factor / factor -> MultiFactorStrategy
-    - buy_hold / equal_weight -> EqualWeightBuyHoldStrategy
+    - trend / trend_following / TrendFollowing -> TrendFollowingStrategy
+    - mean_reversion / reversion / bollinger / MeanReversion -> MeanReversionStrategy
+    - multi_factor / factor / MultiFactor -> MultiFactorStrategy
+    - buy_hold / equal_weight / EqualWeightBuyHold -> EqualWeightBuyHoldStrategy
     """
     s_name = strategy_name.lower().replace("-", "_")
+    p = params or {}
 
     if s_name in ["trend", "trend_following", "trendfollowing"]:
-        return TrendFollowingStrategy(params=params)
+        clean_params = {
+            "short_window": int(p.get("short_window", 5)),
+            "long_window": int(p.get("long_window", 40)),
+            "rebalance_days": int(p.get("rebalance_days", 5)),
+            "max_positions": int(p.get("max_positions", 8))
+        }
+        return TrendFollowingStrategy(params=clean_params)
+
     elif s_name in ["mean_reversion", "meanreversion", "reversion", "bollinger"]:
-        return MeanReversionStrategy(params=params)
+        clean_params = {
+            "window": int(p.get("window", 15)),
+            "num_std": float(p.get("num_std", 1.8)),
+            "exit_z": float(p.get("exit_z", 0.0)),
+            "max_positions": int(p.get("max_positions", 8))
+        }
+        return MeanReversionStrategy(params=clean_params)
+
     elif s_name in ["multi_factor", "multifactor", "factor"]:
-        return MultiFactorStrategy(params=params)
+        lb = int(p.get("lookback_days", p.get("mom_window", 20)))
+        top = int(p.get("top_n", p.get("top_k", 8)))
+        reb = int(p.get("rebalance_days", 5))
+        mom_w = float(p.get("momentum_weight", p.get("w_momentum", 0.6)))
+        vol_w = float(p.get("volatility_weight", p.get("w_volatility", 0.2)))
+        sent_w = float(p.get("sentiment_weight", p.get("w_sentiment", 0.2)))
+        clean_params = {
+            "lookback_days": lb,
+            "mom_window": lb,
+            "vol_window": lb,
+            "rev_window": int(p.get("rev_window", 5)),
+            "momentum_weight": mom_w,
+            "volatility_weight": vol_w,
+            "sentiment_weight": sent_w,
+            "top_k": top,
+            "top_n": top,
+            "rebalance_days": reb,
+            "use_sentiment": bool(p.get("use_sentiment", True))
+        }
+        return MultiFactorStrategy(params=clean_params)
+
     elif s_name in ["buy_hold", "equal_weight", "buy_and_hold", "equalweightbuyhold"]:
-        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
+        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=p)
     else:
-        print(f"[提示] 未识别策略名称 '{strategy_name}'，使用默认等权买入持有策略 (EqualWeightBuyHold)。")
-        return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=params)
+        print(f"[提示] 未识别策略名称 '{strategy_name}'，使用默认趋势跟踪策略 (TrendFollowing TF_5_40_5)。")
+        return TrendFollowingStrategy(params={"short_window": 5, "long_window": 40, "rebalance_days": 5, "max_positions": 8})
 
 
 def handle_backtest(args):
@@ -583,15 +618,10 @@ def api_backtest():
         split_date=OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
     )
 
-    exp_id = log_experiment_record(
-        strategy_name=strategy.name,
-        params=strategy.params,
-        metrics=metrics,
-        stock_count=len(avail),
-        equity_df=eq_df,
-        trades_df=trades_df,
-        chart_path=chart_path
-    )
+    # 归档本次独立自定义回测明细至 records/runs/，严禁污染 records/对比结果.csv 的68组网格寻优结果
+    exp_id = f"EXP_{now_str}_{datetime.now().microsecond // 1000:03d}"
+    detail_path = RECORDS_RUNS_DIR / f"{exp_id}_details.csv"
+    eq_df.to_csv(detail_path, index=False)
 
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
     bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
