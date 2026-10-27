@@ -692,6 +692,12 @@ def handle_web(args):
     print(f"\n >>> 看板服务已就绪: {url}")
     print(f" >>> 请在浏览器访问查看交互终端，按 Ctrl+C 可停止看板服务\n")
 
+    # 自动弹出浏览器 (仅在非 Werkzeug 子重载进程且未指定 --no-browser 时触发)
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true" and not getattr(args, "no_browser", False):
+        import threading
+        import webbrowser
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
+
     flask_app.run(host=host, port=port, debug=False)
 
 
@@ -741,6 +747,11 @@ def main():
         type=int,
         default=5000,
         help="Web 看板端口号 (默认: 5000)"
+    )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="启动 Web 看板时不自动在浏览器中打开"
     )
 
     args = parser.parse_args()
