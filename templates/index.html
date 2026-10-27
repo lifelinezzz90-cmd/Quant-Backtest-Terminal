@@ -13,6 +13,10 @@
       darkMode: "class",
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"Microsoft YaHei UI"', '"Microsoft YaHei"', '"PingFang SC"', 'sans-serif'],
+            mono: ['"Microsoft YaHei UI"', '"Microsoft YaHei"', '"PingFang SC"', 'sans-serif'],
+          },
           colors: {
             "canvas-night": "#12121c",
             "surface-raised": "#1a1a27",
@@ -43,18 +47,14 @@
     /* ==========================================================================
        1. GLOBAL FONT STACK (Prevent Windows SimSun / NSimSun Fallback)
        ========================================================================== */
-    body, button, input, select, table, textarea, p, span, div, h1, h2, h3, h4, h5, h6, a, label {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif !important;
+    body, button, input, select, table, textarea, p, span, div, h1, h2, h3, h4, h5, h6, a, label, .num, code, .font-mono, .font-mono-num {
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-variant-numeric: tabular-nums;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    .num, code, .font-mono-num {
-      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Microsoft YaHei UI", monospace !important;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .tabular-nums {
+    .num, code, .font-mono, .font-mono-num, .tabular-nums {
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" 1, "zero" 1;
     }
@@ -1158,7 +1158,7 @@
           trigger: 'axis',
           backgroundColor: tooltipBg,
           borderColor: tooltipBorder,
-          textStyle: { color: tooltipText, fontSize: 12, fontFamily: 'JetBrains Mono' },
+          textStyle: { color: tooltipText, fontSize: 12, fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif' },
           extraCssText: isLight ? 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);' : 'box-shadow: 0 4px 12px rgba(0,0,0,0.5);',
           formatter: function(params) {
             if (!params || params.length === 0) return '';
@@ -1223,7 +1223,7 @@
             axisLabel: {
               color: textColor,
               fontSize: 10,
-              fontFamily: 'JetBrains Mono',
+              fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
               formatter: function(val, idx) {
                 if (idx % 250 === 0 || idx === dates.length - 1) return val;
                 return '';
@@ -1237,7 +1237,7 @@
             gridIndex: 0,
             scale: true,
             splitLine: { lineStyle: { color: gridLineColor, type: 'dashed' } },
-            axisLabel: { color: textColor, fontSize: 10, fontFamily: 'JetBrains Mono' }
+            axisLabel: { color: textColor, fontSize: 10, fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif' }
           },
           {
             type: 'value',
@@ -1248,7 +1248,7 @@
             axisLabel: {
               color: textColor,
               fontSize: 10,
-              fontFamily: 'JetBrains Mono',
+              fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
               formatter: '{value}%'
             }
           }
@@ -1302,7 +1302,7 @@
                 padding: [2, 6],
                 borderRadius: 4,
                 fontSize: 11,
-                fontFamily: 'JetBrains Mono'
+                fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif'
               },
               data: [
                 { xAxis: splitDate }
