@@ -122,6 +122,7 @@ def calculate_metrics(
         "calmar_ratio": calmar_ratio,
         "win_rate": round(float(win_rate), 4),
         "trade_count": int(trade_count),
+        "closed_trades": int(len(sell_trades)),
         "benchmark_total_return": round(float(bm_total_ret), 4),
         "benchmark_annual_return": round(float(bm_annual_return), 4),
         "excess_annual_return": round(float(excess_annual_return), 4)

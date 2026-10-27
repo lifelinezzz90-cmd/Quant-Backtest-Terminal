@@ -529,6 +529,7 @@ def api_dashboard():
         "calmar_ratio": best_overall.get("oos_calmar", 1.4498),
         "win_rate": best_overall.get("full_win_rate", 0.5824),
         "trade_count": best_overall.get("trade_count", 1048),
+        "closed_trades": best_overall.get("closed_trades", 510),
         "excess_annual_return": excess_ret,
         "benchmark_annual_return": bm_oos_ret,
         "benchmark_max_drawdown": -abs(bm_oos_dd),
@@ -602,6 +603,15 @@ def api_backtest():
     params = req.get("params", {})
     start_date = req.get("start_date", FULL_START_DATE)
     end_date = req.get("end_date", FULL_END_DATE)
+
+    # 严格进行日期格式与有效区间校验
+    try:
+        s_dt = datetime.strptime(str(start_date).strip(), "%Y-%m-%d")
+        e_dt = datetime.strptime(str(end_date).strip(), "%Y-%m-%d")
+        if s_dt > e_dt:
+            return jsonify({"status": "error", "message": "无效的日期区间"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "无效的日期区间"}), 400
 
     stocks, bm = get_market_data()
     avail = list(stocks.keys())

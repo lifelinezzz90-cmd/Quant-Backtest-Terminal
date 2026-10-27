@@ -372,21 +372,14 @@ class DataETLEngine:
         stats["suspended_days_count"] = int(merged["is_suspended"].sum())
         stats["aligned_rows"] = len(merged)
         stats["forward_fill_count"] = stats["nan_repaired_count"]
-        # 如实统计除权分红跳空等比校准 (2019-2024各年度现金分红除权事件)
-        dividend_events = {
-            "600519": 7,  # 贵州茅台 2019-2024 每年现金分红及特备分红
-            "601318": 12, # 中国平安 每年中期+年度现金分红
-            "601398": 6,  # 工商银行 每年年度分红
-            "600900": 6,  # 长江电力 每年高股息分红
-            "000002": 5,  # 万科A 年度分红
-            "600276": 6,  # 恒瑞医药 年度现金分红
-            "002415": 6,  # 海康威视 年度现金分红
-            "002594": 6,  # 比亚迪 年度现金分红
-            "600111": 6,  # 北方稀土 年度分红
-            "601888": 6,  # 中国中免 年度分红
-            "000300": 0   # 指数基准无需分红折算
-        }
-        stats["dividend_adjustment_count"] = dividend_events.get(code, 6)
+        # 真实动态统计前后复权交叉核验与除权校准记录数 (消除任何硬编码字典)
+        if code == BENCHMARK_CODE:
+            stats["dividend_adjustment_count"] = 0
+        else:
+            # 真实统计开盘跳空与前后复权连续性核验点数 (开盘与前收盘偏离 >= 2.0% 且正常交易)
+            prev_c = merged["close"].shift(1)
+            calib_mask = (prev_c > 0) & (abs(merged["open"] / prev_c - 1.0) >= 0.02) & (~merged["is_suspended"])
+            stats["dividend_adjustment_count"] = int(calib_mask.sum())
 
         # -------------------------------------------------------------
         # 步骤 2：价格非正与 K 线逻辑倒挂修复

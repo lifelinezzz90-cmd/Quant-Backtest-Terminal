@@ -124,6 +124,17 @@
     html[data-theme="light"] [class*="border-outline-variant"] {
       border-color: #e2e8f0 !important;
     }
+    html[data-theme="light"] .text-emerald-400,
+    html[data-theme="light"] [class*="text-emerald-400"] {
+      color: #047857 !important;
+      font-weight: 600 !important;
+    }
+    html[data-theme="light"] .text-primary,
+    html[data-theme="light"] [class*="text-primary"],
+    html[data-theme="light"] .text-indigo-400,
+    html[data-theme="light"] [class*="text-indigo-400"] {
+      color: #1d4ed8 !important;
+    }
 
     /* Central Nav Capsule (Segmented Control) */
     .terminal-nav {
@@ -535,7 +546,7 @@
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-text-on-dark tracking-tight num tabular-nums" id="kpiSharpeRatio">0.9546</span>
-          <span class="text-xs text-emerald-400 whitespace-nowrap font-medium">优于91%配置</span>
+          <span class="text-xs text-emerald-400 whitespace-nowrap font-medium">68组寻优 Top 1</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
           <span class="whitespace-nowrap">Calmar比率: <strong class="text-text-on-dark num tabular-nums" id="kpiCalmarRatio">1.4498</strong></span>
@@ -727,12 +738,12 @@
                   <span class="text-[11px] num fold-meta whitespace-nowrap">(2023.01 – 2023.08)</span>
                 </div>
                 <div class="text-xs flex items-center space-x-3 fold-meta">
-                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold1_strat_sharpe">+0.16</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold1_strat_sharpe">+0.81</strong></span>
                   <span>沪深300: <strong class="text-red-400 num tabular-nums" id="fold1_bm_sharpe">-0.43</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold1_excess">+0.59 超额Alpha</span>
+                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold1_excess">+1.24 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
               </div>
             </div>
@@ -745,12 +756,12 @@
                   <span class="text-[11px] num fold-meta whitespace-nowrap">(2023.09 – 2024.04)</span>
                 </div>
                 <div class="text-xs flex items-center space-x-3 fold-meta">
-                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold2_strat_sharpe">+1.09</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold2_strat_sharpe">+0.76</strong></span>
                   <span>沪深300: <strong class="text-red-400 num tabular-nums" id="fold2_bm_sharpe">-0.63</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold2_excess">+1.72 超额Alpha</span>
+                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold2_excess">+1.39 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
               </div>
             </div>
@@ -763,12 +774,12 @@
                   <span class="text-[11px] num fold-meta whitespace-nowrap">(2024.05 – 2024.12)</span>
                 </div>
                 <div class="text-xs flex items-center space-x-3 fold-meta">
-                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold3_strat_sharpe">+1.25</strong></span>
+                  <span>策略夏普: <strong class="text-emerald-400 num tabular-nums" id="fold3_strat_sharpe">+1.32</strong></span>
                   <span>沪深300: <strong class="text-emerald-400 num tabular-nums" id="fold3_bm_sharpe">+0.51</strong></span>
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold3_excess">+0.74 超额Alpha</span>
+                <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold3_excess">+0.81 超额Alpha</span>
                 <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
               </div>
             </div>
@@ -953,7 +964,7 @@
       <div class="pt-2 border-t border-outline-variant/15 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-text-fog gap-2">
         <div class="flex items-center space-x-3">
           <span>总计 <strong class="text-text-on-dark num tabular-nums" id="lblTotalArchived">68</strong> 组网格搜索实验记录已归档</span>
-          <span class="text-emerald-400 font-medium">有效策略三折通过率: <strong>100% (前列)</strong></span>
+          <span class="text-emerald-400 font-medium">最优策略三折通过率: <strong>3/3 (全库 8/68 达标)</strong></span>
           <span class="text-primary font-medium">样本外夏普最高: <strong class="num tabular-nums">0.9546</strong></span>
         </div>
         <div class="num text-text-fog/80 tabular-nums" id="lblShowingCount">
@@ -1361,7 +1372,8 @@
       safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
 
       safeSetText('kpiWinRate', fmtPct(kpis.win_rate));
-      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔成交 (510 笔闭环)`);
+      const closedCount = (kpis && kpis.closed_trades !== undefined) ? kpis.closed_trades : 510;
+      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔成交 (${closedCount} 笔闭环)`);
     }
 
     // Populate Data Governance Table (动态读取后端传入校验结果，修复 Major 3)

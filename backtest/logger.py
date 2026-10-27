@@ -186,6 +186,36 @@ def log_experiment_record(
     exp_id = f"EXP_{now.strftime('%Y%m%d_%H%M%S_%f')[:19]}"
     strat_type = determine_strategy_type(strategy_name, params)
 
+    # 规范化策略简称：若传入的是通用类名，则按照 optimizer.py 规则生成具体简称
+    clean_strat_name = strategy_name
+    generic_names = {"TrendFollowing", "MeanReversion", "MultiFactor", "trend", "mean_reversion", "multi_factor", "CustomStrategy", ""}
+    if not clean_strat_name or clean_strat_name in generic_names:
+        if strat_type == "TrendFollowing":
+            s_w = params.get("short_window", 5)
+            l_w = params.get("long_window", 40)
+            reb = params.get("rebalance_days", 5)
+            clean_strat_name = f"TF_{s_w}_{l_w}_{reb}"
+        elif strat_type == "MeanReversion":
+            w = params.get("window", 20)
+            n_std = params.get("num_std", 1.8)
+            ez = params.get("exit_z", 0.0)
+            clean_strat_name = f"MR_{w}_{n_std}_{ez}"
+        elif strat_type == "MultiFactor":
+            lb = params.get("lookback_days", 20)
+            mw = float(params.get("momentum_weight", 0.6))
+            vw = float(params.get("volatility_weight", 0.2))
+            sw = float(params.get("sentiment_weight", 0.2))
+            m = int(round(mw * 10))
+            v = int(round(vw * 10))
+            s = int(round(sw * 10))
+            clean_strat_name = f"MF_{lb}_M{m}V{v}S{s}"
+
+    # 对 params 字典按键名排序后再 json.dumps，确保与寻优表完全对齐
+    params_str = (
+        json.dumps(dict(sorted(params.items())), ensure_ascii=False)
+        if isinstance(params, dict) else str(params)
+    )
+
     # 1. 归档单次明细 CSV 至 records/runs/
     detail_filename = f"{exp_id}_details.csv"
     detail_filepath = RECORDS_RUNS_DIR / detail_filename
@@ -303,8 +333,8 @@ def log_experiment_record(
     record_data = {
         "experiment_id": exp_id,
         "strategy_type": strat_type,
-        "strategy_name": strategy_name,
-        "params": json.dumps(params, ensure_ascii=False) if isinstance(params, dict) else str(params),
+        "strategy_name": clean_strat_name,
+        "params": params_str,
         "is_annual_return": is_ann,
         "is_max_drawdown": is_dd,
         "is_sharpe": is_sh,
