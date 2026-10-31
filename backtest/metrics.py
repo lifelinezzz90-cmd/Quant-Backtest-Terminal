@@ -104,9 +104,14 @@ def calculate_metrics(
         bm_end = bm_slice["close"].iloc[-1]
         bm_total_ret = (bm_end / bm_start) - 1.0
         bm_annual_return = ((1.0 + bm_total_ret) ** (ANNUAL_TRADING_DAYS / len(bm_slice))) - 1.0
+        bm_nav_series = bm_slice["close"].values
+        bm_cummax = np.maximum.accumulate(bm_nav_series)
+        bm_drawdowns = (bm_cummax - bm_nav_series) / np.where(bm_cummax > 0, bm_cummax, 1.0)
+        bm_max_dd = float(np.max(bm_drawdowns)) if len(bm_drawdowns) > 0 else 0.0
     else:
         bm_total_ret = 0.0
         bm_annual_return = 0.0
+        bm_max_dd = 0.0
 
     excess_annual_return = annual_return - bm_annual_return
     calmar_ratio = round(float(annual_return / max_drawdown), 4) if max_drawdown > 1e-6 else 0.0
@@ -125,6 +130,7 @@ def calculate_metrics(
         "closed_trades": int(len(sell_trades)),
         "benchmark_total_return": round(float(bm_total_ret), 4),
         "benchmark_annual_return": round(float(bm_annual_return), 4),
+        "benchmark_max_drawdown": round(float(bm_max_dd), 4),
         "excess_annual_return": round(float(excess_annual_return), 4)
     }
 

@@ -6,6 +6,15 @@
   <title>A股量化回测系统 · 绩效分析与策略验证终端</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
+  <!-- Anti-Flicker Inline Script (H1 & L7) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('mercury_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.documentElement.className = savedTheme;
+    })();
+  </script>
+
   <!-- Offline Local Tailwind CSS -->
   <script src="/static/tailwindcss.js"></script>
   <script>
@@ -47,6 +56,11 @@
     /* ==========================================================================
        1. GLOBAL FONT STACK (Prevent Windows SimSun / NSimSun Fallback)
        ========================================================================== */
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 72px;
+    }
+
     body, button, input, select, table, textarea, p, span, div, h1, h2, h3, h4, h5, h6, a, label, .num, code, .font-mono, .font-mono-num {
       font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif !important;
       font-variant-numeric: tabular-nums;
@@ -78,7 +92,7 @@
     }
 
     /* ==========================================================================
-       2. LIGHT MODE COMPREHENSIVE OVERRIDES (Zero Dark Residue)
+       2. LIGHT MODE COMPREHENSIVE OVERRIDES (Zero Dark Residue & High Contrast)
        ========================================================================== */
     html[data-theme="light"] {
       background-color: #f8fafc;
@@ -93,6 +107,11 @@
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
       color: #475569 !important;
+    }
+    html[data-theme="light"] header.bg-canvas-night,
+    html[data-theme="light"] footer.bg-canvas-night {
+      background-color: #ffffff !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     }
     html[data-theme="light"] .bg-canvas-night {
       background-color: #f8fafc !important;
@@ -115,7 +134,8 @@
     html[data-theme="light"] .text-text-on-dark {
       color: #0f172a !important;
     }
-    html[data-theme="light"] .text-text-fog {
+    html[data-theme="light"] .text-text-fog,
+    html[data-theme="light"] [class*="text-text-fog"] {
       color: #475569 !important;
     }
     html[data-theme="light"] .text-outline {
@@ -124,9 +144,18 @@
     html[data-theme="light"] [class*="border-outline-variant"] {
       border-color: #e2e8f0 !important;
     }
+    html[data-theme="light"] .text-emerald-500,
+    html[data-theme="light"] [class*="text-emerald-500"],
     html[data-theme="light"] .text-emerald-400,
     html[data-theme="light"] [class*="text-emerald-400"] {
       color: #047857 !important;
+      font-weight: 600 !important;
+    }
+    html[data-theme="light"] .text-red-400,
+    html[data-theme="light"] [class*="text-red-400"],
+    html[data-theme="light"] .text-rose-400,
+    html[data-theme="light"] [class*="text-rose-400"] {
+      color: #b91c1c !important;
       font-weight: 600 !important;
     }
     html[data-theme="light"] .text-primary,
@@ -464,8 +493,8 @@
       </div>
     </div>
 
-    <!-- Center Navigation Links (Segmented Control) -->
-    <nav class="hidden lg:flex terminal-nav" id="topNav">
+    <!-- Center Navigation Links (Segmented Control - Responsive xl:flex) -->
+    <nav class="hidden xl:flex terminal-nav" id="topNav">
       <a class="terminal-nav-link nav-link-active" href="#overview" onclick="setActiveNav(this)">绩效总览与回测</a>
       <a class="terminal-nav-link nav-link-inactive" href="#cv-validation" onclick="setActiveNav(this)">三折防过拟合验证</a>
       <a class="terminal-nav-link nav-link-inactive" href="#data-governance" onclick="setActiveNav(this)">数据治理报告</a>
@@ -474,7 +503,7 @@
 
     <!-- Right Cluster: Status + Theme Toggle + Quick Actions -->
     <div class="flex items-center space-x-3">
-      <div class="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-raised border border-outline-variant/20 text-xs">
+      <div class="hidden 2xl:flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-raised border border-outline-variant/20 text-xs">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="text-xs text-text-fog tracking-tight whitespace-nowrap">零未来函数审计通过 · 1,456 交易日对齐</span>
       </div>
@@ -504,14 +533,14 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
             年化收益率
           </span>
-          <span class="text-[11px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap font-medium">样本外验证</span>
+          <span class="text-[11px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap font-medium" id="kpiStageBadge1">样本外验证</span>
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-text-on-dark tracking-tight num tabular-nums" id="kpiAnnualReturn">+17.24%</span>
           <span class="text-xs text-emerald-400 num tabular-nums whitespace-nowrap" id="kpiExcessReturn">▲ +16.61% 超额</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
-          <span class="whitespace-nowrap">全周期年化: <strong class="text-text-on-dark num tabular-nums" id="kpiFullAnnual">+13.87%</strong></span>
+          <span class="whitespace-nowrap"><span id="kpiBottomLabel1">全周期年化:</span> <strong class="text-text-on-dark num tabular-nums" id="kpiFullAnnual">+13.87%</strong></span>
           <span class="text-text-fog/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkReturn">基准沪深300: +0.63%</span>
         </div>
       </div>
@@ -523,14 +552,14 @@
             <span class="w-2 h-2 rounded-full bg-primary"></span>
             最大回撤
           </span>
-          <span class="text-[11px] text-primary bg-brand-indigo-dim px-1.5 py-0.5 rounded border border-primary/20 whitespace-nowrap font-medium">严格防守</span>
+          <span class="text-[11px] text-primary bg-brand-indigo-dim px-1.5 py-0.5 rounded border border-primary/20 whitespace-nowrap font-medium" id="kpiStageBadge2">严格防守</span>
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-primary tracking-tight num tabular-nums" id="kpiMaxDrawdown">-11.89%</span>
-          <span class="text-xs text-text-fog whitespace-nowrap">样本外阶段</span>
+          <span class="text-xs text-text-fog whitespace-nowrap" id="kpiStageSub2">样本外阶段</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
-          <span class="whitespace-nowrap">全周期最大: <strong class="text-text-on-dark num tabular-nums" id="kpiFullDrawdown">-28.55%</strong></span>
+          <span class="whitespace-nowrap"><span id="kpiBottomLabel2">全周期最大:</span> <strong class="text-text-on-dark num tabular-nums" id="kpiFullDrawdown">-28.55%</strong></span>
           <span class="text-red-400/80 num tabular-nums whitespace-nowrap" id="kpiBenchmarkDrawdown">基准最大: -24.80%</span>
         </div>
       </div>
@@ -744,7 +773,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold1_excess">+1.24 超额Alpha</span>
-                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
+                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium" id="fold1_badge">PASS</span>
               </div>
             </div>
 
@@ -762,7 +791,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold2_excess">+1.39 超额Alpha</span>
-                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
+                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium" id="fold2_badge">PASS</span>
               </div>
             </div>
 
@@ -780,7 +809,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <span class="text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap" id="fold3_excess">+0.81 超额Alpha</span>
-                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">PASS</span>
+                <span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium" id="fold3_badge">PASS</span>
               </div>
             </div>
           </div>
@@ -803,9 +832,11 @@
               </thead>
               <tbody class="divide-y divide-outline-variant/10 num" id="strategyFamiliesTableBody">
                 <tr class="hover:bg-surface-bright/20">
-                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-                    <span>趋势跟踪 (TrendFollowing)</span>
+                  <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
+                    <div class="flex items-center space-x-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                      <span>趋势跟踪 (TrendFollowing)</span>
+                    </div>
                   </td>
                   <td class="py-2 text-text-fog whitespace-nowrap">TF_5_40_5</td>
                   <td class="py-2 text-right text-emerald-400 font-medium tabular-nums whitespace-nowrap">+13.87%</td>
@@ -814,9 +845,11 @@
                   <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-brand-indigo-dim text-primary text-[10px]">Rank #1</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
-                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
-                    <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-                    <span>多因子打分 (MultiFactor)</span>
+                  <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
+                    <div class="flex items-center space-x-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                      <span>多因子打分 (MultiFactor)</span>
+                    </div>
                   </td>
                   <td class="py-2 text-text-fog whitespace-nowrap">MF_20_M5V5S0</td>
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+8.40%</td>
@@ -825,9 +858,11 @@
                   <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #2</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
-                  <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
-                    <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
-                    <span>均值回复 (MeanReversion)</span>
+                  <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
+                    <div class="flex items-center space-x-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                      <span>均值回复 (MeanReversion)</span>
+                    </div>
                   </td>
                   <td class="py-2 text-text-fog whitespace-nowrap">MR_20_1.5_0.0</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+5.17%</td>
@@ -903,10 +938,10 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-outline-variant/15">
         <div class="space-y-0.5">
           <div class="flex items-center space-x-2">
-            <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap">68组全网格参数寻优实验库</h3>
+            <h3 class="text-base font-semibold text-text-on-dark whitespace-nowrap"><span id="lblHeaderCount">68</span>组全网格参数寻优实验库</h3>
             <span class="text-xs text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap num">records/对比结果.csv</span>
           </div>
-          <p class="text-xs text-text-fog">严禁未来函数渗透，全量记录样本内拟合参数与样本外实际验证夏普，防止数据窥探与过拟合陷阱。</p>
+          <p class="text-xs text-text-fog">严禁未来函数渗透，全量记录样本内拟合参数与样本外实际验证夏普，防止数据窥探与过拟合陷阱。点击任意实验行可即时预览净值走势。</p>
         </div>
 
         <!-- Filter Pills & Export CTA -->
@@ -943,7 +978,7 @@
             <tr>
               <th>实验编号</th>
               <th>策略类型</th>
-              <th>策略名 / 参数配置 (JSON)</th>
+              <th>策略名 / 参数配置</th>
               <th style="text-align: right;">样本内年化</th>
               <th style="text-align: right;">样本内夏普</th>
               <th style="text-align: right;">样本外年化</th>
@@ -965,7 +1000,7 @@
         <div class="flex items-center space-x-3">
           <span>总计 <strong class="text-text-on-dark num tabular-nums" id="lblTotalArchived">68</strong> 组网格搜索实验记录已归档</span>
           <span class="text-emerald-400 font-medium">最优策略三折通过率: <strong>3/3 (全库 8/68 达标)</strong></span>
-          <span class="text-primary font-medium">样本外夏普最高: <strong class="num tabular-nums">0.9546</strong></span>
+          <span class="text-primary font-medium">样本外夏普最高: <strong class="num tabular-nums" id="lblMaxSharpe">0.9546</strong></span>
         </div>
         <div class="num text-text-fog/80 tabular-nums" id="lblShowingCount">
           Showing 1 - 68 of 68 entries
@@ -1002,6 +1037,9 @@
     let currentChart = null;
     let currentFilter = 'ALL';
     let currentTheme = localStorage.getItem('mercury_theme') || 'dark';
+    let activeChartData = null;
+    let isLoadingDashboard = false;
+    let isPreviewing = false;
 
     // Top Nav Segmented Control Handler
     function setActiveNav(el) {
@@ -1013,7 +1051,7 @@
       el.classList.remove('nav-link-inactive');
     }
 
-    // Theme Management
+    // Theme Management Safe Helpers
     function safeSetText(id, text) {
       const el = document.getElementById(id);
       if (el) el.textContent = (text !== undefined && text !== null) ? text : '';
@@ -1050,13 +1088,15 @@
         safeSetText('themeText', '深色终端');
       }
 
-      // Re-render chart with adapted palette if data exists
-      if (dashboardData && dashboardData.chart_data) {
+      // Re-render chart with adapted palette if data exists (H1 & L7)
+      if (activeChartData) {
+        renderChart(activeChartData);
+      } else if (dashboardData && dashboardData.chart_data) {
         renderChart(dashboardData.chart_data);
       }
     }
 
-    // Dynamic Parameter Templates
+    // Dynamic Parameter Templates (L5: sentiment_weight corrected)
     const PARAM_TEMPLATES = {
       TrendFollowing: [
         { id: 'short_window', label: '短期均线 (short_window)', unit: 'DAY', type: 'number', min: 2, max: 60, default: 5 },
@@ -1068,7 +1108,7 @@
         { id: 'lookback_days', label: '回看周期 (lookback_days)', unit: 'DAY', type: 'number', min: 5, max: 120, default: 20 },
         { id: 'momentum_weight', label: '动量权重 (momentum_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.5 },
         { id: 'volatility_weight', label: '低波权重 (volatility_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.5 },
-        { id: 'sentiment_weight', label: '量价反转权重 (reversal_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.0 }
+        { id: 'sentiment_weight', label: '量价反转权重 (sentiment_weight)', unit: 'W', type: 'number', step: 0.1, min: 0, max: 1.0, default: 0.0 }
       ],
       MeanReversion: [
         { id: 'window', label: '布林周期 (window)', unit: 'DAY', type: 'number', min: 5, max: 60, default: 20 },
@@ -1105,7 +1145,25 @@
 
     function onStrategySelectChange() {
       const select = document.getElementById('strategySelect');
-      if (select) renderDynamicParams(select.value);
+      if (!select) return;
+      const stratKey = select.value;
+      renderDynamicParams(stratKey);
+
+      // Update preset pills active state
+      const typeMap = {
+        TrendFollowing: 'TF',
+        trend: 'TF',
+        MultiFactor: 'MF',
+        multi_factor: 'MF',
+        MeanReversion: 'MR',
+        mean_reversion: 'MR'
+      };
+      const activeType = typeMap[stratKey] || '';
+      ['TF', 'MF', 'MR'].forEach(t => {
+        const btn = document.getElementById(`presetBtn_${t}`);
+        if (!btn) return;
+        btn.className = (t === activeType) ? 'preset-pill preset-pill-active' : 'preset-pill preset-pill-inactive';
+      });
     }
 
     function applyPreset(presetType) {
@@ -1121,21 +1179,83 @@
       });
 
       const stratSelect = document.getElementById('strategySelect');
+      let stratKey = 'TrendFollowing';
+      let p = {};
+      let name = '';
+
       if (presetType === 'TF') {
-        if (stratSelect) stratSelect.value = 'TrendFollowing';
-        renderDynamicParams('TrendFollowing', { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 });
+        stratKey = 'TrendFollowing';
+        p = { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 };
+        name = 'TrendFollowing TF_5_40_5';
       } else if (presetType === 'MF') {
-        if (stratSelect) stratSelect.value = 'MultiFactor';
-        renderDynamicParams('MultiFactor', { lookback_days: 20, momentum_weight: 0.5, volatility_weight: 0.5, sentiment_weight: 0.0 });
+        stratKey = 'MultiFactor';
+        p = { lookback_days: 20, momentum_weight: 0.5, volatility_weight: 0.5, sentiment_weight: 0.0, rebalance_days: 5, top_n: 8, top_k: 8 };
+        name = 'MultiFactor MF_20_M5V5S0';
       } else if (presetType === 'MR') {
-        if (stratSelect) stratSelect.value = 'MeanReversion';
-        renderDynamicParams('MeanReversion', { window: 20, num_std: 1.5, exit_z: 0.0, max_positions: 6 });
+        stratKey = 'MeanReversion';
+        p = { window: 20, num_std: 1.5, exit_z: 0.0, max_positions: 6 };
+        name = 'MeanReversion MR_20_1.5_0.0';
       }
+
+      if (stratSelect) stratSelect.value = stratKey;
+      renderDynamicParams(stratKey, p);
+      previewExperiment(stratKey, p, name);
     }
 
-    // ECharts Dual Subplot Renderer
+    // Format Helpers
+    function fmtPct(num, digits = 2, withSign = true) {
+      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
+      const n = Number(num);
+      const sign = (withSign && n > 0) ? '+' : '';
+      return `${sign}${(n * 100).toFixed(digits)}%`;
+    }
+
+    function fmtNum(num, digits = 4) {
+      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
+      return Number(num).toFixed(digits);
+    }
+
+    // Populate KPIs (H2, H3, H4, L1, L2)
+    function updateKPIs(kpis) {
+      if (!kpis) return;
+      safeSetText('kpiAnnualReturn', fmtPct(kpis.annual_return));
+
+      // L1: Dynamic sign, prefix and color for excess return
+      const excessEl = document.getElementById('kpiExcessReturn');
+      if (excessEl) {
+        const exVal = Number(kpis.excess_annual_return || 0);
+        if (exVal >= 0) {
+          excessEl.textContent = `▲ ${fmtPct(exVal, 2, true)} 超额`;
+          excessEl.className = 'text-xs text-emerald-400 num tabular-nums whitespace-nowrap';
+        } else {
+          excessEl.textContent = `▼ ${fmtPct(exVal, 2, false)} 超额`;
+          excessEl.className = 'text-xs text-red-400 num tabular-nums whitespace-nowrap';
+        }
+      }
+
+      safeSetText('kpiFullAnnual', fmtPct(kpis.full_annual_return));
+      safeSetText('kpiBenchmarkReturn', `基准沪深300: ${fmtPct(kpis.benchmark_annual_return)}`);
+
+      safeSetText('kpiMaxDrawdown', `-${Math.abs(kpis.max_drawdown * 100).toFixed(2)}%`);
+      safeSetText('kpiFullDrawdown', `-${Math.abs(kpis.full_max_drawdown * 100).toFixed(2)}%`);
+      safeSetText('kpiBenchmarkDrawdown', `基准最大: -${Math.abs(kpis.benchmark_max_drawdown * 100).toFixed(2)}%`);
+
+      safeSetText('kpiSharpeRatio', fmtNum(kpis.sharpe_ratio, 4));
+      safeSetText('kpiCalmarRatio', fmtNum(kpis.calmar_ratio, 4));
+      safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
+
+      // L2: Win rate without + sign
+      safeSetText('kpiWinRate', fmtPct(kpis.win_rate, 2, false));
+
+      // H2: closed trades calculated or provided without hardcoded 510 fallback
+      const closedCount = (kpis && kpis.closed_trades !== undefined) ? kpis.closed_trades : Math.floor((kpis.trade_count || 0) / 2);
+      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count || 0).toLocaleString()} 笔成交 (${closedCount} 笔闭环)`);
+    }
+
+    // ECharts Dual Subplot Renderer (H1 & L7)
     function renderChart(chartData) {
       if (!chartData || !chartData.dates || chartData.dates.length === 0) return;
+      activeChartData = chartData;
 
       const container = document.getElementById('mainChartContainer');
       if (!currentChart) {
@@ -1265,7 +1385,7 @@
           }
         ],
         series: [
-          // Series 1: CSI300 Benchmark NAV (Muted Slate / Dashed)
+          // Series 1: CSI300 Benchmark NAV
           {
             name: '沪深300',
             type: 'line',
@@ -1275,7 +1395,7 @@
             showSymbol: false,
             lineStyle: { color: bmLineColor, width: 1.5, type: 'dashed' }
           },
-          // Series 2: Strategy NAV (Glowing line with gradient area)
+          // Series 2: Strategy NAV
           {
             name: '策略净值',
             type: 'line',
@@ -1320,7 +1440,7 @@
               ]
             }
           },
-          // Series 3: Underwater Drawdown (Red area)
+          // Series 3: Underwater Drawdown
           {
             name: '水下回撤',
             type: 'line',
@@ -1342,48 +1462,75 @@
       currentChart.setOption(option, true);
     }
 
-    // Format Helpers
-    function fmtPct(num, digits = 2, withSign = true) {
-      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
-      const n = Number(num);
-      const sign = (withSign && n > 0) ? '+' : '';
-      return `${sign}${(n * 100).toFixed(digits)}%`;
+    // Read-only Fast Preview via POST /api/preview (M2 & M3)
+    async function previewExperiment(strategyType, params, name) {
+      if (isPreviewing) return;
+      isPreviewing = true;
+      try {
+        const resp = await fetch('/api/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            strategy: strategyType,
+            params: params,
+            start_date: '2019-01-02',
+            end_date: '2024-12-31'
+          })
+        });
+        if (!resp.ok) {
+          const errText = await resp.text();
+          console.error('预览请求失败:', errText);
+          return;
+        }
+        const res = await resp.json();
+        if (res && res.success) {
+          safeSetText('currentStrategyTag', `${res.strategy_name || name} (实验预览)`);
+          renderChart(res.chart_data);
+
+          const m = res.metrics;
+          const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
+          const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
+          const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
+
+          updateKPIs({
+            annual_return: m.annual_return,
+            excess_annual_return: excessRet,
+            full_annual_return: m.annual_return,
+            benchmark_annual_return: bmRet,
+            max_drawdown: m.max_drawdown,
+            full_max_drawdown: m.max_drawdown,
+            benchmark_max_drawdown: bmDD,
+            sharpe_ratio: m.sharpe_ratio,
+            calmar_ratio: m.calmar_ratio,
+            full_sharpe: m.sharpe_ratio,
+            win_rate: m.win_rate,
+            trade_count: m.trade_count,
+            closed_trades: m.closed_trades
+          });
+        }
+      } catch (err) {
+        console.error('预览异常:', err);
+      } finally {
+        isPreviewing = false;
+      }
     }
 
-    function fmtNum(num, digits = 4) {
-      if (num === null || num === undefined || isNaN(num) || num === '-') return '-';
-      return Number(num).toFixed(digits);
-    }
-
-    // Populate KPIs
-    function updateKPIs(kpis) {
-      if (!kpis) return;
-      safeSetText('kpiAnnualReturn', fmtPct(kpis.annual_return));
-      safeSetText('kpiExcessReturn', `▲ ${fmtPct(kpis.excess_annual_return)} 超额`);
-      safeSetText('kpiFullAnnual', fmtPct(kpis.full_annual_return));
-      safeSetText('kpiBenchmarkReturn', `基准沪深300: ${fmtPct(kpis.benchmark_annual_return)}`);
-
-      safeSetText('kpiMaxDrawdown', `-${Math.abs(kpis.max_drawdown * 100).toFixed(2)}%`);
-      safeSetText('kpiFullDrawdown', `-${Math.abs(kpis.full_max_drawdown * 100).toFixed(2)}%`);
-      safeSetText('kpiBenchmarkDrawdown', `基准最大: -${Math.abs(kpis.benchmark_max_drawdown * 100).toFixed(2)}%`);
-
-      safeSetText('kpiSharpeRatio', fmtNum(kpis.sharpe_ratio, 4));
-      safeSetText('kpiCalmarRatio', fmtNum(kpis.calmar_ratio, 4));
-      safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
-
-      safeSetText('kpiWinRate', fmtPct(kpis.win_rate));
-      const closedCount = (kpis && kpis.closed_trades !== undefined) ? kpis.closed_trades : 510;
-      safeSetText('kpiTradeCount', `共 ${Number(kpis.trade_count).toLocaleString()} 笔成交 (${closedCount} 笔闭环)`);
-    }
-
-    // Populate Data Governance Table (动态读取后端传入校验结果，修复 Major 3)
+    // Populate Data Governance Table (L5: Strictly ordered stock pool)
     function renderDataGovernanceTable(validation) {
       const tbody = document.getElementById('dataGovernanceTableBody');
       if (!tbody) return;
 
+      const ORDERED_STOCKS = ['600519', '601318', '601398', '600900', '000002', '600276', '002415', '002594', '600111', '601888', '000300'];
+      const defaultNames = {
+        '600519': '贵州茅台', '601318': '中国平安', '601398': '工商银行', '600900': '长江电力',
+        '000002': '万科A',   '600276': '恒瑞医药', '002415': '海康威视', '002594': '比亚迪',
+        '600111': '北方稀土', '601888': '中国中免', '000300': '沪深300'
+      };
+
       let items = [];
       if (validation && validation.stocks_summary && Object.keys(validation.stocks_summary).length > 0) {
-        items = Object.entries(validation.stocks_summary).map(([code, s]) => {
+        items = ORDERED_STOCKS.map(code => {
+          const s = validation.stocks_summary[code] || {};
           let rule = '正常连续交易';
           let note = '等比复权核验完毕';
           if (s.suspended_days_count > 0) {
@@ -1399,7 +1546,7 @@
           }
           return {
             code: code,
-            name: s.name || code,
+            name: s.name || defaultNames[code] || code,
             align: s.aligned_rows || 1456,
             suspended: s.suspended_days_count || 0,
             rule: rule,
@@ -1440,7 +1587,86 @@
       tbody.innerHTML = html;
     }
 
-    // Experiments Table Filtering & Sorting
+    // Format Parameters to Compact Chinese Badges (M9)
+    function formatParamsToBadges(strategyType, paramsVal, stratName) {
+      let p = {};
+      try {
+        p = typeof paramsVal === 'string' ? JSON.parse(paramsVal) : (paramsVal || {});
+      } catch (_) {}
+
+      let badges = [];
+      if (stratName) {
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-raised border border-outline-variant/30 text-text-on-dark font-medium whitespace-nowrap">${stratName}</span>`);
+      }
+
+      if (strategyType === 'TrendFollowing' || strategyType === 'trend') {
+        const shortW = p.short_window !== undefined ? p.short_window : 5;
+        const longW = p.long_window !== undefined ? p.long_window : 40;
+        const reb = p.rebalance_days !== undefined ? p.rebalance_days : 5;
+        const maxP = p.max_positions !== undefined ? p.max_positions : 8;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">均线 MA(${shortW}, ${longW})</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${reb}日调仓</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">上限 ${maxP} 只</span>`);
+      } else if (strategyType === 'MultiFactor' || strategyType === 'multi_factor') {
+        const lb = p.lookback_days !== undefined ? p.lookback_days : 20;
+        const mom = p.momentum_weight !== undefined ? Math.round(p.momentum_weight * 10) : 5;
+        const vol = p.volatility_weight !== undefined ? Math.round(p.volatility_weight * 10) : 5;
+        const rev = p.sentiment_weight !== undefined ? Math.round(p.sentiment_weight * 10) : 0;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">回看 ${lb}日</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">动${mom}/低波${vol}/反${rev}</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${p.rebalance_days || 5}日调仓</span>`);
+      } else if (strategyType === 'MeanReversion' || strategyType === 'mean_reversion') {
+        const win = p.window !== undefined ? p.window : 20;
+        const std = p.num_std !== undefined ? p.num_std : 1.5;
+        const exitZ = p.exit_z !== undefined ? p.exit_z : 0.0;
+        const maxP = p.max_positions !== undefined ? p.max_positions : 6;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">布林 ${win}日 (${std}σ)</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">平仓阈值 ${exitZ}σ</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">上限 ${maxP} 只</span>`);
+      } else {
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${JSON.stringify(p)}</span>`);
+      }
+
+      return `<div class="inline-flex items-center flex-wrap gap-1 text-[11px] num">${badges.join('')}</div>`;
+    }
+
+    // Select and preview experiment on row click (M2 & M3)
+    function onSelectExperimentRow(expId) {
+      if (!dashboardData || !dashboardData.experiments) return;
+      const item = dashboardData.experiments.find(e => e.experiment_id === expId);
+      if (!item) return;
+
+      const stratSelect = document.getElementById('strategySelect');
+      if (stratSelect) {
+        stratSelect.value = item.strategy_type;
+      }
+      let p = {};
+      try {
+        p = typeof item.params === 'string' ? JSON.parse(item.params) : (item.params || {});
+      } catch (_) {}
+
+      renderDynamicParams(item.strategy_type, p);
+
+      // Match preset pill if applicable
+      const typeMap = {
+        TrendFollowing: 'TF',
+        trend: 'TF',
+        MultiFactor: 'MF',
+        multi_factor: 'MF',
+        MeanReversion: 'MR',
+        mean_reversion: 'MR'
+      };
+      const activeType = typeMap[item.strategy_type] || '';
+      ['TF', 'MF', 'MR'].forEach(t => {
+        const btn = document.getElementById(`presetBtn_${t}`);
+        if (!btn) return;
+        btn.className = (t === activeType) ? 'preset-pill preset-pill-active' : 'preset-pill preset-pill-inactive';
+      });
+
+      previewExperiment(item.strategy_type, p, item.strategy_name || item.experiment_id);
+    }
+
+    // Experiments Table Filtering & Sorting (M4, M5, M9, M11, L3)
     function filterExperiments(category) {
       currentFilter = category;
       ['ALL', 'TrendFollowing', 'MultiFactor', 'MeanReversion'].forEach(c => {
@@ -1473,6 +1699,7 @@
       safeSetText('countTF', countTF);
       safeSetText('countMF', countMF);
       safeSetText('countMR', countMR);
+      safeSetText('lblHeaderCount', countAll);
       safeSetText('lblTotalArchived', countAll);
 
       // Filter
@@ -1480,21 +1707,31 @@
         list = list.filter(e => e.strategy_type === currentFilter);
       }
 
-      // Sort
+      // Sort with secondary sort on oos_3fold_pass_desc (M4)
       list.sort((a, b) => {
         const num = (v) => (v === '-' || v === undefined || v === null) ? -999999 : Number(v);
         if (sortBy === 'oos_sharpe_desc') return num(b.oos_sharpe) - num(a.oos_sharpe);
         if (sortBy === 'full_annual_return_desc') return num(b.full_annual_return) - num(a.full_annual_return);
         if (sortBy === 'oos_max_drawdown_asc') return Math.abs(num(a.oos_max_drawdown)) - Math.abs(num(b.oos_max_drawdown));
-        if (sortBy === 'oos_3fold_pass_desc') return String(b.oos_3fold_pass).localeCompare(String(a.oos_3fold_pass));
+        if (sortBy === 'oos_3fold_pass_desc') {
+          const passA = (a.oos_3fold_pass === true || a.oos_3fold_pass === 'True') ? 1 : 0;
+          const passB = (b.oos_3fold_pass === true || b.oos_3fold_pass === 'True') ? 1 : 0;
+          if (passB !== passA) return passB - passA;
+          return num(b.oos_sharpe) - num(a.oos_sharpe);
+        }
         return 0;
       });
 
+      // Update max Sharpe dynamically (M11)
+      const num = (v) => (v === '-' || v === undefined || v === null) ? -999999 : Number(v);
+      const maxSharpe = list.length > 0 ? Math.max(...list.map(e => num(e.oos_sharpe))) : 0.9546;
+      safeSetText('lblMaxSharpe', fmtNum(maxSharpe, 4));
       safeSetText('lblShowingCount', `Showing 1 - ${list.length} of ${countAll} entries`);
 
       let html = '';
-      list.forEach((item, idx) => {
-        const isBest = idx === 0 && currentFilter === 'ALL';
+      list.forEach((item) => {
+        // M4: Strict best check bound to TF_5_40_5 or OPT_003_TrendFollowing
+        const isBest = item.strategy_name === 'TF_5_40_5' || item.experiment_id === 'OPT_003_TrendFollowing';
         const isCustom = item.is_custom === true;
         let rowStyle = '';
         if (isCustom) {
@@ -1503,30 +1740,43 @@
           rowStyle = 'style="background-color: rgba(79, 70, 229, 0.08); border-left: 3px solid #4f46e5;"';
         }
 
+        // L3: py-0.5
         const badge = isCustom
-          ? '<span class="px-1.5 py-0.2 rounded bg-emerald-500 text-white text-[10px] font-medium">最新回测</span>'
-          : (isBest ? '<span class="px-1.5 py-0.2 rounded bg-primary-container text-white text-[10px] font-medium">最优</span>' : '');
+          ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[10px] font-medium whitespace-nowrap">最新回测</span>'
+          : (isBest ? '<span class="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px] font-medium whitespace-nowrap">最优</span>' : '');
 
+        // M5: Pass badge colors
         const passBadge = (item.oos_3fold_pass === true || item.oos_3fold_pass === 'True')
-          ? '<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/20 text-emerald-500 border border-emerald-400/30 whitespace-nowrap font-medium">3/3 PASS</span>'
-          : '<span class="px-2 py-0.5 rounded text-[11px] bg-gray-200/50 text-text-fog whitespace-nowrap">-</span>';
+          ? '<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/20 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">3/3 PASS</span>'
+          : '<span class="px-2 py-0.5 rounded text-[11px] bg-surface-container-high text-text-fog whitespace-nowrap">-</span>';
+
+        // M5: Dynamic colors for returns and Sharpes
+        const isAnnColor = num(item.is_annual_return) >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const isSharpeColor = num(item.is_sharpe) >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const oosAnnColor = num(item.oos_annual_return) >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const oosSharpeColor = num(item.oos_sharpe) >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const fullAnnColor = num(item.full_annual_return) >= 0 ? 'text-emerald-400' : 'text-red-400';
+
+        // M9: Escaped title quotes and compact badges
+        const titleEscaped = String(item.params || '').replace(/"/g, '&quot;');
+        const paramsBadges = formatParamsToBadges(item.strategy_type, item.params, item.strategy_name);
 
         html += `
-          <tr ${rowStyle}>
+          <tr ${rowStyle} onclick="onSelectExperimentRow('${item.experiment_id}')" class="cursor-pointer transition-colors hover:bg-surface-bright/30">
             <td class="font-semibold whitespace-nowrap">
               <span class="text-primary num">${item.experiment_id || 'EXP'}</span>
               ${badge}
             </td>
             <td class="whitespace-nowrap">${item.strategy_type}</td>
-            <td class="text-[11px] num max-w-xs truncate" title="${item.params}">${item.strategy_name || ''} ${item.params}</td>
-            <td style="text-align: right;" class="text-emerald-500 num tabular-nums whitespace-nowrap">${fmtPct(item.is_annual_return)}</td>
-            <td style="text-align: right;" class="text-emerald-500 num tabular-nums whitespace-nowrap">${fmtNum(item.is_sharpe, 2)}</td>
-            <td style="text-align: right;" class="text-emerald-500 font-bold num tabular-nums whitespace-nowrap">${fmtPct(item.oos_annual_return)}</td>
+            <td class="text-[11px] num max-w-sm" title="${titleEscaped}">${paramsBadges}</td>
+            <td style="text-align: right;" class="${isAnnColor} num tabular-nums whitespace-nowrap">${fmtPct(item.is_annual_return)}</td>
+            <td style="text-align: right;" class="${isSharpeColor} num tabular-nums whitespace-nowrap">${fmtNum(item.is_sharpe, 2)}</td>
+            <td style="text-align: right;" class="${oosAnnColor} font-bold num tabular-nums whitespace-nowrap">${fmtPct(item.oos_annual_return)}</td>
             <td style="text-align: right;" class="text-primary font-bold num tabular-nums whitespace-nowrap">-${Math.abs(Number(item.oos_max_drawdown || 0) * 100).toFixed(2)}%</td>
-            <td style="text-align: right;" class="text-emerald-500 font-bold num tabular-nums whitespace-nowrap">${fmtNum(item.oos_sharpe, 4)}</td>
+            <td style="text-align: right;" class="${oosSharpeColor} font-bold num tabular-nums whitespace-nowrap">${fmtNum(item.oos_sharpe, 4)}</td>
             <td style="text-align: center;" class="whitespace-nowrap">${passBadge}</td>
-            <td style="text-align: right;" class="font-medium num tabular-nums whitespace-nowrap">${fmtPct(item.full_annual_return)}</td>
-            <td style="text-align: right;" class="num tabular-nums whitespace-nowrap">${fmtPct(item.full_win_rate)}</td>
+            <td style="text-align: right;" class="${fullAnnColor} font-medium num tabular-nums whitespace-nowrap">${fmtPct(item.full_annual_return)}</td>
+            <td style="text-align: right;" class="num tabular-nums whitespace-nowrap">${fmtPct(item.full_win_rate, 2, false)}</td>
           </tr>
         `;
       });
@@ -1534,34 +1784,60 @@
       tbody.innerHTML = html;
     }
 
-    // Render Rolling 3-Fold Anti-Overfit Cards
+    // Render Rolling 3-Fold Anti-Overfit Cards (H5)
     function renderRolling3Fold(rolling) {
       if (!rolling) return;
-      const f1 = rolling.fold1;
-      const f2 = rolling.fold2;
-      const f3 = rolling.fold3;
+      const folds = [
+        { key: 'fold1', fold: rolling.fold1, badgeId: 'fold1_badge', stratId: 'fold1_strat_sharpe', bmId: 'fold1_bm_sharpe', exId: 'fold1_excess' },
+        { key: 'fold2', fold: rolling.fold2, badgeId: 'fold2_badge', stratId: 'fold2_strat_sharpe', bmId: 'fold2_bm_sharpe', exId: 'fold2_excess' },
+        { key: 'fold3', fold: rolling.fold3, badgeId: 'fold3_badge', stratId: 'fold3_strat_sharpe', bmId: 'fold3_bm_sharpe', exId: 'fold3_excess' }
+      ];
 
-      if (f1) {
-        safeSetText('fold1_strat_sharpe', (f1.strat_sharpe >= 0 ? '+' : '') + Number(f1.strat_sharpe).toFixed(2));
-        safeSetText('fold1_bm_sharpe', (f1.bm_sharpe >= 0 ? '+' : '') + Number(f1.bm_sharpe).toFixed(2));
-        safeSetText('fold1_excess', (f1.excess >= 0 ? '+' : '') + Number(f1.excess).toFixed(2) + ' 超额Alpha');
-      }
-      if (f2) {
-        safeSetText('fold2_strat_sharpe', (f2.strat_sharpe >= 0 ? '+' : '') + Number(f2.strat_sharpe).toFixed(2));
-        safeSetText('fold2_bm_sharpe', (f2.bm_sharpe >= 0 ? '+' : '') + Number(f2.bm_sharpe).toFixed(2));
-        safeSetText('fold2_excess', (f2.excess >= 0 ? '+' : '') + Number(f2.excess).toFixed(2) + ' 超额Alpha');
-      }
-      if (f3) {
-        safeSetText('fold3_strat_sharpe', (f3.strat_sharpe >= 0 ? '+' : '') + Number(f3.strat_sharpe).toFixed(2));
-        safeSetText('fold3_bm_sharpe', (f3.bm_sharpe >= 0 ? '+' : '') + Number(f3.bm_sharpe).toFixed(2));
-        safeSetText('fold3_excess', (f3.excess >= 0 ? '+' : '') + Number(f3.excess).toFixed(2) + ' 超额Alpha');
-      }
+      folds.forEach(({ fold, badgeId, stratId, bmId, exId }) => {
+        if (!fold) return;
+        const stratEl = document.getElementById(stratId);
+        if (stratEl) {
+          stratEl.textContent = (fold.strat_sharpe >= 0 ? '+' : '') + Number(fold.strat_sharpe).toFixed(2);
+          stratEl.className = fold.strat_sharpe >= 0 ? 'text-emerald-400 num tabular-nums' : 'text-red-400 num tabular-nums';
+        }
+        const bmEl = document.getElementById(bmId);
+        if (bmEl) {
+          bmEl.textContent = (fold.bm_sharpe >= 0 ? '+' : '') + Number(fold.bm_sharpe).toFixed(2);
+          bmEl.className = fold.bm_sharpe >= 0 ? 'text-emerald-400 num tabular-nums' : 'text-red-400 num tabular-nums';
+        }
+        const exEl = document.getElementById(exId);
+        if (exEl) {
+          exEl.textContent = (fold.excess >= 0 ? '+' : '') + Number(fold.excess).toFixed(2) + ' 超额Alpha';
+          exEl.className = fold.excess >= 0 ? 'text-xs num text-emerald-400 font-medium tabular-nums whitespace-nowrap' : 'text-xs num text-red-400 font-medium tabular-nums whitespace-nowrap';
+        }
+        const badgeEl = document.getElementById(badgeId);
+        if (badgeEl) {
+          const isPass = fold.pass !== undefined ? fold.pass : (fold.strat_sharpe > 0 && fold.strat_sharpe >= fold.bm_sharpe);
+          if (isPass) {
+            badgeEl.textContent = 'PASS';
+            badgeEl.className = 'px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium';
+          } else {
+            badgeEl.textContent = 'FAIL';
+            badgeEl.className = 'px-2 py-0.5 rounded text-[11px] bg-red-500/15 text-red-400 border border-red-500/30 whitespace-nowrap font-medium';
+          }
+        }
+      });
+
       if (rolling.overall_pass) {
-        safeSetText('badge3Fold', rolling.overall_pass + ' 全胜基准');
+        const badge3FoldEl = document.getElementById('badge3Fold');
+        if (badge3FoldEl) {
+          if (rolling.overall_pass.startsWith('3/3') || rolling.overall_pass === '3/3') {
+            badge3FoldEl.textContent = `${rolling.overall_pass} 全胜基准`;
+            badge3FoldEl.className = 'text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 whitespace-nowrap font-medium';
+          } else {
+            badge3FoldEl.textContent = `${rolling.overall_pass} 达标`;
+            badge3FoldEl.className = 'text-xs text-text-fog bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap font-medium';
+          }
+        }
       }
     }
 
-    // Render Strategy Families Matrix
+    // Render Strategy Families Matrix (L4: Fixed cell layout)
     function renderStrategyFamilies(categoryBests) {
       if (!categoryBests) return;
       const tbody = document.getElementById('strategyFamiliesTableBody');
@@ -1585,9 +1861,11 @@
 
         html += `
           <tr class="hover:bg-surface-bright/20">
-            <td class="py-2 text-text-on-dark font-medium flex items-center space-x-1.5 whitespace-nowrap">
-              <span class="w-1.5 h-1.5 rounded-full ${cfg.dotClass}"></span>
-              <span>${cfg.label}</span>
+            <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
+              <div class="flex items-center space-x-1.5">
+                <span class="w-1.5 h-1.5 rounded-full ${cfg.dotClass}"></span>
+                <span>${cfg.label}</span>
+              </div>
             </td>
             <td class="py-2 text-text-fog whitespace-nowrap">${name}</td>
             <td class="py-2 text-right ${annColor} font-medium tabular-nums whitespace-nowrap">${annRet}</td>
@@ -1600,11 +1878,13 @@
       tbody.innerHTML = html;
     }
 
-    // Load All Dashboard Data from Flask API
+    // Load All Dashboard Data from Flask API (H6 & M10: Throttling & Error Display)
     async function loadDashboardData() {
+      if (isLoadingDashboard) return;
+      isLoadingDashboard = true;
       try {
         const resp = await fetch('/api/dashboard');
-        if (!resp.ok) throw new Error('API request failed');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: 请求失败`);
         dashboardData = await resp.json();
 
         // Update KPIs
@@ -1627,10 +1907,24 @@
 
       } catch (err) {
         console.error('加载看板数据失败:', err);
+        const container = document.getElementById('mainChartContainer');
+        if (container) {
+          container.innerHTML = `
+            <div class="w-full h-full flex flex-col items-center justify-center space-y-3 text-text-fog p-6 text-center">
+              <div class="text-sm text-red-400 font-semibold">看板数据加载异常</div>
+              <div class="text-xs text-text-fog max-w-md">${err && err.message ? err.message : String(err)}</div>
+              <button onclick="loadDashboardData()" class="px-4 py-1.5 rounded-full bg-primary-container hover:bg-primary-hover text-white text-xs font-medium cursor-pointer shadow">
+                点击重试
+              </button>
+            </div>
+          `;
+        }
+      } finally {
+        isLoadingDashboard = false;
       }
     }
 
-    // Run Custom Backtest via POST /api/backtest
+    // Run Custom Backtest via POST /api/backtest (H2, H3, H4, H6)
     async function runCustomBacktest() {
       const btn = document.getElementById('btnRunBacktest');
       const spinner = document.getElementById('btnRunSpinner');
@@ -1643,7 +1937,7 @@
       const startDate = startInput ? startInput.value.trim() : '2019-01-02';
       const endDate = endInput ? endInput.value.trim() : '2024-12-31';
 
-      // 校验日期格式与逻辑合法性，防止非法输入导致后端 500
+      // 校验日期格式与逻辑合法性
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
         alert('回测日期格式不正确，请输入规范的 YYYY-MM-DD 格式（例如 2019-01-01）！');
@@ -1691,6 +1985,18 @@
           })
         });
 
+        if (!resp.ok) {
+          let errDetail = '未知错误';
+          try {
+            const errJson = await resp.json();
+            errDetail = (errJson && (errJson.message || errJson.error)) || `HTTP ${resp.status}`;
+          } catch (_) {
+            errDetail = `HTTP ${resp.status}`;
+          }
+          alert('回测执行失败: ' + errDetail);
+          return;
+        }
+
         const res = await resp.json();
         if (res && res.success) {
           // Update tag
@@ -1699,26 +2005,64 @@
           // Smoothly update chart
           renderChart(res.chart_data);
 
-          // Update KPI metrics (动态采用真实计算结果，杜绝硬编码假数字)
+          // Update KPI metrics (H2, H3, H4)
           const m = res.metrics;
-          const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
-          const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
-          const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
+          const isFullPeriod = (startDate <= '2019-01-05' && endDate >= '2024-12-25');
 
-          updateKPIs({
-            annual_return: m.annual_return,
-            excess_annual_return: excessRet,
-            full_annual_return: m.annual_return,
-            benchmark_annual_return: bmRet,
-            max_drawdown: m.max_drawdown,
-            full_max_drawdown: m.max_drawdown,
-            benchmark_max_drawdown: bmDD,
-            sharpe_ratio: m.sharpe_ratio,
-            calmar_ratio: m.calmar_ratio,
-            full_sharpe: m.sharpe_ratio,
-            win_rate: m.win_rate,
-            trade_count: m.trade_count
-          });
+          if (res.new_record && isFullPeriod) {
+            safeSetText('kpiStageBadge1', '样本外验证');
+            safeSetText('kpiStageBadge2', '严格防守');
+            safeSetText('kpiStageSub2', '样本外阶段');
+            safeSetText('kpiBottomLabel1', '全周期年化:');
+            safeSetText('kpiBottomLabel2', '全周期最大:');
+
+            const rec = res.new_record;
+            updateKPIs({
+              annual_return: rec.oos_annual_return !== undefined ? rec.oos_annual_return : m.annual_return,
+              excess_annual_return: (rec.oos_annual_return !== undefined ? rec.oos_annual_return : m.annual_return) - (m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063),
+              full_annual_return: rec.full_annual_return !== undefined ? rec.full_annual_return : m.annual_return,
+              benchmark_annual_return: m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063,
+              max_drawdown: rec.oos_max_drawdown !== undefined ? rec.oos_max_drawdown : m.max_drawdown,
+              full_max_drawdown: m.max_drawdown,
+              benchmark_max_drawdown: m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480,
+              sharpe_ratio: rec.oos_sharpe !== undefined ? rec.oos_sharpe : m.sharpe_ratio,
+              calmar_ratio: m.calmar_ratio,
+              full_sharpe: m.sharpe_ratio,
+              win_rate: rec.full_win_rate !== undefined ? rec.full_win_rate : m.win_rate,
+              trade_count: m.trade_count,
+              closed_trades: m.closed_trades
+            });
+
+            if (res.rolling_3fold) {
+              renderRolling3Fold(res.rolling_3fold);
+            }
+          } else {
+            safeSetText('kpiStageBadge1', '当前回测区间');
+            safeSetText('kpiStageBadge2', '当前回测区间');
+            safeSetText('kpiStageSub2', '区间阶段');
+            safeSetText('kpiBottomLabel1', '区间年化:');
+            safeSetText('kpiBottomLabel2', '区间最大:');
+
+            const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
+            const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
+            const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
+
+            updateKPIs({
+              annual_return: m.annual_return,
+              excess_annual_return: excessRet,
+              full_annual_return: m.annual_return,
+              benchmark_annual_return: bmRet,
+              max_drawdown: m.max_drawdown,
+              full_max_drawdown: m.max_drawdown,
+              benchmark_max_drawdown: bmDD,
+              sharpe_ratio: m.sharpe_ratio,
+              calmar_ratio: m.calmar_ratio,
+              full_sharpe: m.sharpe_ratio,
+              win_rate: m.win_rate,
+              trade_count: m.trade_count,
+              closed_trades: m.closed_trades
+            });
+          }
 
           // Insert into experiments table at top
           if (res.new_record && dashboardData && dashboardData.experiments) {
@@ -1727,7 +2071,7 @@
             renderExperimentsTable();
           }
         } else {
-          alert('回测执行失败: ' + ((res && res.error) ? res.error : '未知错误'));
+          alert('回测执行失败: ' + ((res && (res.message || res.error)) ? (res.message || res.error) : '未知错误'));
         }
       } catch (err) {
         console.error('回测请求异常:', err);

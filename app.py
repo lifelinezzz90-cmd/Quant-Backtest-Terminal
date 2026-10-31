@@ -529,7 +529,7 @@ def api_dashboard():
         "calmar_ratio": best_overall.get("oos_calmar", 1.4498),
         "win_rate": best_overall.get("full_win_rate", 0.5824),
         "trade_count": best_overall.get("trade_count", 1048),
-        "closed_trades": best_overall.get("closed_trades", 510),
+        "closed_trades": int(best_overall.get("closed_trades", 510)),
         "excess_annual_return": excess_ret,
         "benchmark_annual_return": bm_oos_ret,
         "benchmark_max_drawdown": -abs(bm_oos_dd),
@@ -674,6 +674,65 @@ def api_backtest():
             "split_date": OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
         },
         "new_record": new_record
+    })
+
+
+@flask_app.route("/api/preview", methods=["POST"])
+def api_preview():
+    """
+    只读预览回测：内存实时撮合并返回净值/KPI，严禁调用 log_experiment_record 写盘，不生成 PNG 图片
+    """
+    req = request.get_json() or {}
+    strategy_key = req.get("strategy", "trend")
+    params = req.get("params", {})
+    start_date = req.get("start_date", FULL_START_DATE)
+    end_date = req.get("end_date", FULL_END_DATE)
+
+    # 严格进行日期格式与有效区间校验
+    try:
+        s_dt = datetime.strptime(str(start_date).strip(), "%Y-%m-%d")
+        e_dt = datetime.strptime(str(end_date).strip(), "%Y-%m-%d")
+        if s_dt > e_dt:
+            return jsonify({"status": "error", "message": "无效的日期区间"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "无效的日期区间"}), 400
+
+    stocks, bm = get_market_data()
+    avail = list(stocks.keys())
+
+    strategy = get_strategy_instance(strategy_key, params, avail)
+    engine = BacktestEngine(initial_cash=INITIAL_CASH)
+    res = engine.run(strategy, stocks, start_date=start_date, end_date=end_date)
+
+    eq_df = res["equity_df"]
+    trades_df = res["trades_df"]
+
+    metrics = calculate_metrics(eq_df, bm, trades_df, initial_capital=INITIAL_CASH)
+
+    bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
+    bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
+    bm_nav = (bm_slice["close"] / bm_slice["close"].iloc[0]).round(4).tolist()
+
+    strat_nav = eq_df["nav"].round(4).tolist()
+    dates = eq_df["date"].tolist()
+
+    nav_arr = np.array(strat_nav)
+    cummax = np.maximum.accumulate(nav_arr)
+    drawdowns = ((cummax - nav_arr) / np.where(cummax > 0, cummax, 1.0) * -100.0).round(2).tolist()
+
+    chart_data = {
+        "dates": dates,
+        "nav": strat_nav,
+        "bm_nav": bm_nav,
+        "drawdown": drawdowns,
+        "split_date": OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
+    }
+
+    return jsonify({
+        "success": True,
+        "strategy_name": strategy.name,
+        "metrics": metrics,
+        "chart_data": chart_data
     })
 
 
