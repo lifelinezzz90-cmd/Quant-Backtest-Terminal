@@ -15,6 +15,17 @@
     })();
   </script>
 
+  <!-- Suppress CDN Tailwind Production Warning (L6) -->
+  <script>
+    (function() {
+      const _warn = console.warn;
+      console.warn = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('should not be used in production')) return;
+        return _warn.apply(console, args);
+      };
+    })();
+  </script>
+
   <!-- Offline Local Tailwind CSS -->
   <script src="/static/tailwindcss.js"></script>
   <script>
@@ -588,7 +599,7 @@
         </div>
         <div class="flex items-baseline space-x-2">
           <span class="text-3xl font-semibold text-text-on-dark tracking-tight num tabular-nums" id="kpiSharpeRatio">0.9546</span>
-          <span class="text-xs text-emerald-400 whitespace-nowrap font-medium">68组寻优 Top 1</span>
+          <span class="text-xs text-emerald-400 whitespace-nowrap font-medium" id="kpiSharpeRank">68组寻优 Top 1</span>
         </div>
         <div class="mt-2.5 pt-2 border-t border-outline-variant/15 flex items-center justify-between text-xs text-text-fog">
           <span class="whitespace-nowrap">Calmar比率: <strong class="text-text-on-dark num tabular-nums" id="kpiCalmarRatio">1.4498</strong></span>
@@ -1285,6 +1296,41 @@
       safeSetText('kpiCalmarRatio', fmtNum(kpis.calmar_ratio, 4));
       safeSetText('kpiFullSharpe', `全周期夏普: ${fmtNum(kpis.full_sharpe, 4)}`);
 
+      // Dynamic Sharpe Rank sub-badge (L6 & Top Rank dynamic update)
+      const rankEl = document.getElementById('kpiSharpeRank');
+      if (rankEl) {
+        if (kpis.is_custom_interval) {
+          rankEl.textContent = '自定义区间回测';
+          rankEl.className = 'text-xs text-text-fog whitespace-nowrap font-medium';
+        } else if (dashboardData && Array.isArray(dashboardData.experiments) && dashboardData.experiments.length > 0) {
+          const total = dashboardData.experiments.length;
+          const currentSharpe = Number(kpis.sharpe_ratio !== undefined ? kpis.sharpe_ratio : 0);
+          const sortedSharpes = dashboardData.experiments
+            .map(e => Number(e.oos_sharpe))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => b - a);
+
+          let rank = -1;
+          for (let i = 0; i < sortedSharpes.length; i++) {
+            if (Math.abs(sortedSharpes[i] - currentSharpe) < 1e-4) {
+              rank = i + 1;
+              break;
+            }
+          }
+          if (rank === -1) {
+            const higher = sortedSharpes.filter(s => s > currentSharpe + 1e-5).length;
+            rank = higher + 1;
+          }
+
+          rankEl.textContent = `${total}组寻优 Top ${rank}`;
+          if (rank <= 8) {
+            rankEl.className = 'text-xs text-emerald-400 whitespace-nowrap font-medium';
+          } else {
+            rankEl.className = 'text-xs text-text-fog whitespace-nowrap font-medium';
+          }
+        }
+      }
+
       // L2: Win rate without + sign
       safeSetText('kpiWinRate', fmtPct(kpis.win_rate, 2, false));
 
@@ -1537,7 +1583,8 @@
           full_sharpe: m.sharpe_ratio,
           win_rate: m.win_rate,
           trade_count: m.trade_count,
-          closed_trades: m.closed_trades
+          closed_trades: m.closed_trades,
+          is_custom_interval: false
         });
 
         if (res.rolling_3fold) {
@@ -1567,7 +1614,8 @@
           full_sharpe: m.sharpe_ratio,
           win_rate: m.win_rate,
           trade_count: m.trade_count,
-          closed_trades: m.closed_trades
+          closed_trades: m.closed_trades,
+          is_custom_interval: true
         });
       }
     }
@@ -2013,7 +2061,7 @@
         const kpiSec = document.getElementById('kpiCardsSection');
         if (kpiSec) kpiSec.classList.add('opacity-50');
 
-        ['kpiAnnualReturn', 'kpiExcessReturn', 'kpiFullAnnual', 'kpiMaxDrawdown', 'kpiFullDrawdown', 'kpiSharpeRatio', 'kpiCalmarRatio', 'kpiWinRate', 'kpiTradeCount'].forEach(id => {
+        ['kpiAnnualReturn', 'kpiExcessReturn', 'kpiFullAnnual', 'kpiMaxDrawdown', 'kpiFullDrawdown', 'kpiSharpeRatio', 'kpiSharpeRank', 'kpiCalmarRatio', 'kpiWinRate', 'kpiTradeCount'].forEach(id => {
           safeSetText(id, '--');
         });
         safeSetText('lblShowingCount', 'Showing 0 entries (数据加载异常)');
