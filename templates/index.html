@@ -92,7 +92,7 @@
     }
 
     /* ==========================================================================
-       2. LIGHT MODE COMPREHENSIVE OVERRIDES (Zero Dark Residue & High Contrast)
+       2. LIGHT MODE COMPREHENSIVE OVERRIDES (Zero Dark Residue & High Contrast M7)
        ========================================================================== */
     html[data-theme="light"] {
       background-color: #f8fafc;
@@ -144,13 +144,26 @@
     html[data-theme="light"] [class*="border-outline-variant"] {
       border-color: #e2e8f0 !important;
     }
+
+    /* M7: Contrast >= 6.5:1 with deep pine green #065f46 */
     html[data-theme="light"] .text-emerald-500,
     html[data-theme="light"] [class*="text-emerald-500"],
     html[data-theme="light"] .text-emerald-400,
     html[data-theme="light"] [class*="text-emerald-400"] {
-      color: #047857 !important;
+      color: #065f46 !important;
       font-weight: 600 !important;
     }
+    html[data-theme="light"] [id^="fold"][id$="_badge"],
+    html[data-theme="light"] .bg-emerald-400\/15,
+    html[data-theme="light"] [class*="bg-emerald-400/15"],
+    html[data-theme="light"] .bg-emerald-400\/20,
+    html[data-theme="light"] [class*="bg-emerald-400/20"],
+    html[data-theme="light"] .badge-pass {
+      background-color: rgba(16, 185, 129, 0.12) !important;
+      color: #065f46 !important;
+      border-color: rgba(5, 150, 105, 0.35) !important;
+    }
+
     html[data-theme="light"] .text-red-400,
     html[data-theme="light"] [class*="text-red-400"],
     html[data-theme="light"] .text-rose-400,
@@ -419,8 +432,8 @@
       border: 1px solid #cbd5e1 !important;
     }
     html[data-theme="light"] .preset-pill-inactive:hover {
-      background-color: #e2e8f0 !important;
       color: #0f172a !important;
+      background-color: #e2e8f0 !important;
     }
 
     /* Filter Toolbar */
@@ -477,8 +490,8 @@
 </head>
 <body class="bg-canvas-night text-text-on-dark min-h-screen antialiased selection:bg-primary-container selection:text-white transition-colors duration-200">
 
-  <!-- TOP TERMINAL BAR -->
-  <header class="w-full h-14 px-4 md:px-6 flex items-center justify-between border-b border-outline-variant/20 bg-canvas-night sticky top-0 z-50">
+  <!-- TOP TERMINAL BAR (L9: Responsive min-h-[56px] and flex-wrap) -->
+  <header class="w-full min-h-[56px] py-1.5 px-4 md:px-6 flex flex-wrap items-center justify-between gap-y-1.5 border-b border-outline-variant/20 bg-canvas-night sticky top-0 z-50">
     <!-- Left Cluster: Brand Glyph + Terminal Identity -->
     <div class="flex items-center space-x-3">
       <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-raised border border-outline-variant/30 text-primary shadow-inner">
@@ -493,8 +506,8 @@
       </div>
     </div>
 
-    <!-- Center Navigation Links (Segmented Control - Responsive xl:flex) -->
-    <nav class="hidden xl:flex terminal-nav" id="topNav">
+    <!-- Center Navigation Links (L9: flex flex-wrap, never display:none) -->
+    <nav class="order-3 w-full justify-center lg:order-none lg:w-auto flex flex-wrap items-center terminal-nav" id="topNav">
       <a class="terminal-nav-link nav-link-active" href="#overview" onclick="setActiveNav(this)">绩效总览与回测</a>
       <a class="terminal-nav-link nav-link-inactive" href="#cv-validation" onclick="setActiveNav(this)">三折防过拟合验证</a>
       <a class="terminal-nav-link nav-link-inactive" href="#data-governance" onclick="setActiveNav(this)">数据治理报告</a>
@@ -524,8 +537,8 @@
   <!-- MAIN TERMINAL VIEWPORT -->
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-5 space-y-5" id="overview">
 
-    <!-- ROW 1: EXECUTIVE KPI SUMMARY CARDS -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- ROW 1: EXECUTIVE KPI SUMMARY CARDS (M10: id="kpiCardsSection") -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity duration-200" id="kpiCardsSection">
       <!-- KPI Card 1: Annual Return -->
       <div class="bg-surface-raised border border-outline-variant/20 rounded-xl p-4 relative overflow-hidden transition-all hover:border-outline-variant/40">
         <div class="flex items-center justify-between text-outline text-xs mb-1.5">
@@ -614,8 +627,8 @@
             <span class="text-xs text-text-fog ml-1 whitespace-nowrap" id="currentStrategyTag">TrendFollowing TF_5_40_5</span>
           </div>
 
-          <!-- Strategy Preset Selector Pills -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto text-xs py-0.5">
+          <!-- Strategy Preset Selector Pills (flex-wrap) -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs py-0.5">
             <button onclick="applyPreset('TF')" id="presetBtn_TF" class="preset-pill preset-pill-active">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
               <span>趋势跟踪最优 (TF_5_40_5)</span>
@@ -995,11 +1008,11 @@
         </table>
       </div>
 
-      <!-- Table Footer Status Summary -->
+      <!-- Table Footer Status Summary (M11 / R3: id="lblPassRatio") -->
       <div class="pt-2 border-t border-outline-variant/15 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-text-fog gap-2">
         <div class="flex items-center space-x-3">
           <span>总计 <strong class="text-text-on-dark num tabular-nums" id="lblTotalArchived">68</strong> 组网格搜索实验记录已归档</span>
-          <span class="text-emerald-400 font-medium">最优策略三折通过率: <strong>3/3 (全库 8/68 达标)</strong></span>
+          <span class="text-emerald-400 font-medium">最优策略三折通过率: <strong>3/3 (全库 <span id="lblPassRatio" class="num">8/68</span> 达标)</strong></span>
           <span class="text-primary font-medium">样本外夏普最高: <strong class="num tabular-nums" id="lblMaxSharpe">0.9546</strong></span>
         </div>
         <div class="num text-text-fog/80 tabular-nums" id="lblShowingCount">
@@ -1009,15 +1022,15 @@
     </section>
   </main>
 
-  <!-- SUBTLE TERMINAL BOTTOM SYSTEM BAR -->
+  <!-- SUBTLE TERMINAL BOTTOM SYSTEM BAR (M12: flex-wrap without hardcoded widths) -->
   <footer class="w-full border-t border-outline-variant/20 bg-canvas-night py-3 px-4 md:px-6 mt-8 text-xs text-text-fog">
-    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div class="flex items-center space-x-3">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center space-x-3 gap-y-1">
         <span class="text-text-on-dark font-medium uppercase whitespace-nowrap">MERCURY QUANT ARCHITECTURE</span>
         <span class="text-outline-variant">|</span>
         <span class="whitespace-nowrap">A股机构级量化研究终端 · 严格零未来函数与真实流动性撮合</span>
       </div>
-      <div class="flex items-center space-x-4 num text-[11px]">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 num text-[11px]">
         <span class="flex items-center space-x-1 whitespace-nowrap">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span>Feed: T+1 Open Match</span>
@@ -1049,6 +1062,34 @@
       });
       el.classList.add('nav-link-active');
       el.classList.remove('nav-link-inactive');
+    }
+
+    // Scroll-Spy Linkage (L8)
+    function initScrollSpy() {
+      const navSections = [
+        { id: 'params-lib', hash: '#params-lib' },
+        { id: 'data-governance', hash: '#data-governance' },
+        { id: 'cv-validation', hash: '#cv-validation' },
+        { id: 'overview', hash: '#overview' }
+      ];
+      window.addEventListener('scroll', () => {
+        const scrollPos = window.scrollY + 120;
+        for (const sec of navSections) {
+          const el = document.getElementById(sec.id);
+          if (el && scrollPos >= el.offsetTop) {
+            document.querySelectorAll('.terminal-nav-link').forEach(link => {
+              if (link.getAttribute('href') === sec.hash) {
+                link.classList.add('nav-link-active');
+                link.classList.remove('nav-link-inactive');
+              } else {
+                link.classList.remove('nav-link-active');
+                link.classList.add('nav-link-inactive');
+              }
+            });
+            break;
+          }
+        }
+      }, { passive: true });
     }
 
     // Theme Management Safe Helpers
@@ -1462,7 +1503,76 @@
       currentChart.setOption(option, true);
     }
 
-    // Read-only Fast Preview via POST /api/preview (M2 & M3)
+    // Unified Backtest/Preview Results Application (R1 & R2)
+    function applyBacktestResult(res, startDate, endDate) {
+      if (!res || !res.success) return;
+
+      safeSetText('currentStrategyTag', (res.strategy_name || '') + (res.is_preview ? ' (实验预览)' : ' (自定义回测)'));
+      renderChart(res.chart_data);
+
+      const m = res.metrics;
+      const isFullPeriod = (startDate <= '2019-01-05' && endDate >= '2024-12-25');
+      const oos = res.oos_metrics;
+
+      if (isFullPeriod && oos) {
+        safeSetText('kpiStageBadge1', '样本外验证');
+        safeSetText('kpiStageBadge2', '严格防守');
+        safeSetText('kpiStageSub2', '样本外阶段');
+        safeSetText('kpiBottomLabel1', '全周期年化:');
+        safeSetText('kpiBottomLabel2', '全周期最大:');
+
+        const bmOosRet = oos.benchmark_annual_return !== undefined ? oos.benchmark_annual_return : 0.0063;
+        const bmOosDd = oos.benchmark_max_drawdown !== undefined ? oos.benchmark_max_drawdown : 0.2480;
+
+        updateKPIs({
+          annual_return: oos.oos_annual_return,
+          excess_annual_return: oos.oos_annual_return - bmOosRet,
+          full_annual_return: m.annual_return,
+          benchmark_annual_return: bmOosRet,
+          max_drawdown: -Math.abs(oos.oos_max_drawdown),
+          full_max_drawdown: -Math.abs(m.max_drawdown),
+          benchmark_max_drawdown: -Math.abs(bmOosDd),
+          sharpe_ratio: oos.oos_sharpe,
+          calmar_ratio: oos.oos_calmar,
+          full_sharpe: m.sharpe_ratio,
+          win_rate: m.win_rate,
+          trade_count: m.trade_count,
+          closed_trades: m.closed_trades
+        });
+
+        if (res.rolling_3fold) {
+          renderRolling3Fold(res.rolling_3fold);
+        }
+      } else {
+        safeSetText('kpiStageBadge1', '当前回测区间');
+        safeSetText('kpiStageBadge2', '当前回测区间');
+        safeSetText('kpiStageSub2', '区间阶段');
+        safeSetText('kpiBottomLabel1', '区间年化:');
+        safeSetText('kpiBottomLabel2', '区间最大:');
+
+        const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
+        const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
+        const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
+
+        updateKPIs({
+          annual_return: m.annual_return,
+          excess_annual_return: excessRet,
+          full_annual_return: m.annual_return,
+          benchmark_annual_return: bmRet,
+          max_drawdown: -Math.abs(m.max_drawdown),
+          full_max_drawdown: -Math.abs(m.max_drawdown),
+          benchmark_max_drawdown: -Math.abs(bmDD),
+          sharpe_ratio: m.sharpe_ratio,
+          calmar_ratio: m.calmar_ratio,
+          full_sharpe: m.sharpe_ratio,
+          win_rate: m.win_rate,
+          trade_count: m.trade_count,
+          closed_trades: m.closed_trades
+        });
+      }
+    }
+
+    // Read-only Fast Preview via POST /api/preview (M2 & M3 & R1 & R2)
     async function previewExperiment(strategyType, params, name) {
       if (isPreviewing) return;
       isPreviewing = true;
@@ -1484,29 +1594,8 @@
         }
         const res = await resp.json();
         if (res && res.success) {
-          safeSetText('currentStrategyTag', `${res.strategy_name || name} (实验预览)`);
-          renderChart(res.chart_data);
-
-          const m = res.metrics;
-          const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
-          const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
-          const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
-
-          updateKPIs({
-            annual_return: m.annual_return,
-            excess_annual_return: excessRet,
-            full_annual_return: m.annual_return,
-            benchmark_annual_return: bmRet,
-            max_drawdown: m.max_drawdown,
-            full_max_drawdown: m.max_drawdown,
-            benchmark_max_drawdown: bmDD,
-            sharpe_ratio: m.sharpe_ratio,
-            calmar_ratio: m.calmar_ratio,
-            full_sharpe: m.sharpe_ratio,
-            win_rate: m.win_rate,
-            trade_count: m.trade_count,
-            closed_trades: m.closed_trades
-          });
+          res.is_preview = true;
+          applyBacktestResult(res, '2019-01-02', '2024-12-31');
         }
       } catch (err) {
         console.error('预览异常:', err);
@@ -1515,7 +1604,7 @@
       }
     }
 
-    // Populate Data Governance Table (L5: Strictly ordered stock pool)
+    // Populate Data Governance Table (L11: dynamic calibration events, no hardcoded '601318')
     function renderDataGovernanceTable(validation) {
       const tbody = document.getElementById('dataGovernanceTableBody');
       if (!tbody) return;
@@ -1531,19 +1620,23 @@
       if (validation && validation.stocks_summary && Object.keys(validation.stocks_summary).length > 0) {
         items = ORDERED_STOCKS.map(code => {
           const s = validation.stocks_summary[code] || {};
+          const isBenchmark = Boolean(s.is_benchmark || code === '000300');
           let rule = '正常连续交易';
           let note = '等比复权核验完毕';
-          if (s.suspended_days_count > 0) {
-            rule = '收盘价锁死/无法买卖';
-          }
-          if (code === '601318') {
-            rule = '修正分红除权失真';
-            note = '100% 几何匹配';
-          }
-          if (code === '000300') {
+
+          if (isBenchmark) {
             rule = '基准基石交易日历';
             note = '权威基准数据';
+          } else {
+            if (s.suspended_days_count > 0) {
+              rule = '收盘价锁死/无法买卖';
+            }
+            const calibEvents = s.qfq_calibrated_events !== undefined ? s.qfq_calibrated_events : (s.dividend_adjustment_count || 0);
+            if (calibEvents > 0) {
+              note = `等比复权校准 (${calibEvents}处)`;
+            }
           }
+
           return {
             code: code,
             name: s.name || defaultNames[code] || code,
@@ -1556,7 +1649,7 @@
       } else {
         items = [
           { code: '600519', name: '贵州茅台', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
-          { code: '601318', name: '中国平安', align: 1456, suspended: 0, rule: '修正分红除权失真', note: '100% 几何匹配' },
+          { code: '601318', name: '中国平安', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权校准 (29处)' },
           { code: '601398', name: '工商银行', align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
           { code: '600900', name: '长江电力', align: 1456, suspended: 11, rule: '收盘价锁死/无法买卖', note: '等比复权核验完毕' },
           { code: '000002', name: '万科A',   align: 1456, suspended: 0, rule: '正常连续交易', note: '等比复权核验完毕' },
@@ -1630,7 +1723,7 @@
       return `<div class="inline-flex items-center flex-wrap gap-1 text-[11px] num">${badges.join('')}</div>`;
     }
 
-    // Select and preview experiment on row click (M2 & M3)
+    // Select and preview experiment on row click (M2 & M3 & R1 & R2)
     function onSelectExperimentRow(expId) {
       if (!dashboardData || !dashboardData.experiments) return;
       const item = dashboardData.experiments.find(e => e.experiment_id === expId);
@@ -1666,7 +1759,7 @@
       previewExperiment(item.strategy_type, p, item.strategy_name || item.experiment_id);
     }
 
-    // Experiments Table Filtering & Sorting (M4, M5, M9, M11, L3)
+    // Experiments Table Filtering & Sorting (M4, M5, M9, M11, R3, L3)
     function filterExperiments(category) {
       currentFilter = category;
       ['ALL', 'TrendFollowing', 'MultiFactor', 'MeanReversion'].forEach(c => {
@@ -1701,6 +1794,10 @@
       safeSetText('countMR', countMR);
       safeSetText('lblHeaderCount', countAll);
       safeSetText('lblTotalArchived', countAll);
+
+      // M11 / R3: Dynamically calculate full library pass ratio
+      const passCount = list.filter(e => e.oos_3fold_pass === true || String(e.oos_3fold_pass) === 'True').length;
+      safeSetText('lblPassRatio', `${passCount}/${countAll}`);
 
       // Filter
       if (currentFilter !== 'ALL') {
@@ -1745,9 +1842,9 @@
           ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[10px] font-medium whitespace-nowrap">最新回测</span>'
           : (isBest ? '<span class="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px] font-medium whitespace-nowrap">最优</span>' : '');
 
-        // M5: Pass badge colors
+        // M5 & M7: Pass badge colors
         const passBadge = (item.oos_3fold_pass === true || item.oos_3fold_pass === 'True')
-          ? '<span class="px-2 py-0.5 rounded text-[11px] bg-emerald-400/20 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">3/3 PASS</span>'
+          ? '<span class="badge-pass px-2 py-0.5 rounded text-[11px] bg-emerald-400/20 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium">3/3 PASS</span>'
           : '<span class="px-2 py-0.5 rounded text-[11px] bg-surface-container-high text-text-fog whitespace-nowrap">-</span>';
 
         // M5: Dynamic colors for returns and Sharpes
@@ -1784,7 +1881,7 @@
       tbody.innerHTML = html;
     }
 
-    // Render Rolling 3-Fold Anti-Overfit Cards (H5)
+    // Render Rolling 3-Fold Anti-Overfit Cards (H5 & M7)
     function renderRolling3Fold(rolling) {
       if (!rolling) return;
       const folds = [
@@ -1815,7 +1912,7 @@
           const isPass = fold.pass !== undefined ? fold.pass : (fold.strat_sharpe > 0 && fold.strat_sharpe >= fold.bm_sharpe);
           if (isPass) {
             badgeEl.textContent = 'PASS';
-            badgeEl.className = 'px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium';
+            badgeEl.className = 'badge-pass px-2 py-0.5 rounded text-[11px] bg-emerald-400/15 text-emerald-400 border border-emerald-400/30 whitespace-nowrap font-medium';
           } else {
             badgeEl.textContent = 'FAIL';
             badgeEl.className = 'px-2 py-0.5 rounded text-[11px] bg-red-500/15 text-red-400 border border-red-500/30 whitespace-nowrap font-medium';
@@ -1878,7 +1975,7 @@
       tbody.innerHTML = html;
     }
 
-    // Load All Dashboard Data from Flask API (H6 & M10: Throttling & Error Display)
+    // Load All Dashboard Data from Flask API (M10: Throttle & Clear fake KPIs on failure)
     async function loadDashboardData() {
       if (isLoadingDashboard) return;
       isLoadingDashboard = true;
@@ -1886,6 +1983,10 @@
         const resp = await fetch('/api/dashboard');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}: 请求失败`);
         dashboardData = await resp.json();
+
+        // Restore KPI section opacity
+        const kpiSec = document.getElementById('kpiCardsSection');
+        if (kpiSec) kpiSec.classList.remove('opacity-50');
 
         // Update KPIs
         updateKPIs(dashboardData.kpis);
@@ -1907,6 +2008,16 @@
 
       } catch (err) {
         console.error('加载看板数据失败:', err);
+
+        // M10: Clear static placeholder KPIs and show error
+        const kpiSec = document.getElementById('kpiCardsSection');
+        if (kpiSec) kpiSec.classList.add('opacity-50');
+
+        ['kpiAnnualReturn', 'kpiExcessReturn', 'kpiFullAnnual', 'kpiMaxDrawdown', 'kpiFullDrawdown', 'kpiSharpeRatio', 'kpiCalmarRatio', 'kpiWinRate', 'kpiTradeCount'].forEach(id => {
+          safeSetText(id, '--');
+        });
+        safeSetText('lblShowingCount', 'Showing 0 entries (数据加载异常)');
+
         const container = document.getElementById('mainChartContainer');
         if (container) {
           container.innerHTML = `
@@ -1924,7 +2035,7 @@
       }
     }
 
-    // Run Custom Backtest via POST /api/backtest (H2, H3, H4, H6)
+    // Run Custom Backtest via POST /api/backtest (H2, H3, H4, H6 & R1 & R2)
     async function runCustomBacktest() {
       const btn = document.getElementById('btnRunBacktest');
       const spinner = document.getElementById('btnRunSpinner');
@@ -1999,70 +2110,8 @@
 
         const res = await resp.json();
         if (res && res.success) {
-          // Update tag
-          safeSetText('currentStrategyTag', `${res.strategy_name} (自定义回测)`);
-
-          // Smoothly update chart
-          renderChart(res.chart_data);
-
-          // Update KPI metrics (H2, H3, H4)
-          const m = res.metrics;
-          const isFullPeriod = (startDate <= '2019-01-05' && endDate >= '2024-12-25');
-
-          if (res.new_record && isFullPeriod) {
-            safeSetText('kpiStageBadge1', '样本外验证');
-            safeSetText('kpiStageBadge2', '严格防守');
-            safeSetText('kpiStageSub2', '样本外阶段');
-            safeSetText('kpiBottomLabel1', '全周期年化:');
-            safeSetText('kpiBottomLabel2', '全周期最大:');
-
-            const rec = res.new_record;
-            updateKPIs({
-              annual_return: rec.oos_annual_return !== undefined ? rec.oos_annual_return : m.annual_return,
-              excess_annual_return: (rec.oos_annual_return !== undefined ? rec.oos_annual_return : m.annual_return) - (m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063),
-              full_annual_return: rec.full_annual_return !== undefined ? rec.full_annual_return : m.annual_return,
-              benchmark_annual_return: m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063,
-              max_drawdown: rec.oos_max_drawdown !== undefined ? rec.oos_max_drawdown : m.max_drawdown,
-              full_max_drawdown: m.max_drawdown,
-              benchmark_max_drawdown: m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480,
-              sharpe_ratio: rec.oos_sharpe !== undefined ? rec.oos_sharpe : m.sharpe_ratio,
-              calmar_ratio: m.calmar_ratio,
-              full_sharpe: m.sharpe_ratio,
-              win_rate: rec.full_win_rate !== undefined ? rec.full_win_rate : m.win_rate,
-              trade_count: m.trade_count,
-              closed_trades: m.closed_trades
-            });
-
-            if (res.rolling_3fold) {
-              renderRolling3Fold(res.rolling_3fold);
-            }
-          } else {
-            safeSetText('kpiStageBadge1', '当前回测区间');
-            safeSetText('kpiStageBadge2', '当前回测区间');
-            safeSetText('kpiStageSub2', '区间阶段');
-            safeSetText('kpiBottomLabel1', '区间年化:');
-            safeSetText('kpiBottomLabel2', '区间最大:');
-
-            const bmRet = m.benchmark_annual_return !== undefined ? m.benchmark_annual_return : 0.0063;
-            const bmDD = m.benchmark_max_drawdown !== undefined ? m.benchmark_max_drawdown : -0.2480;
-            const excessRet = m.excess_annual_return !== undefined ? m.excess_annual_return : (m.annual_return - bmRet);
-
-            updateKPIs({
-              annual_return: m.annual_return,
-              excess_annual_return: excessRet,
-              full_annual_return: m.annual_return,
-              benchmark_annual_return: bmRet,
-              max_drawdown: m.max_drawdown,
-              full_max_drawdown: m.max_drawdown,
-              benchmark_max_drawdown: bmDD,
-              sharpe_ratio: m.sharpe_ratio,
-              calmar_ratio: m.calmar_ratio,
-              full_sharpe: m.sharpe_ratio,
-              win_rate: m.win_rate,
-              trade_count: m.trade_count,
-              closed_trades: m.closed_trades
-            });
-          }
+          res.is_preview = false;
+          applyBacktestResult(res, startDate, endDate);
 
           // Insert into experiments table at top
           if (res.new_record && dashboardData && dashboardData.experiments) {
@@ -2099,7 +2148,14 @@
         console.error('主题初始化失败:', err);
       }
 
-      // 2. 渲染右侧动态参数面板
+      // 2. 初始化滚动导航监听 (L8)
+      try {
+        initScrollSpy();
+      } catch (err) {
+        console.error('Scroll-Spy 初始化失败:', err);
+      }
+
+      // 3. 渲染右侧动态参数面板
       try {
         const stratSelect = document.getElementById('strategySelect');
         const defaultStrategy = stratSelect ? stratSelect.value : 'TrendFollowing';
@@ -2108,7 +2164,7 @@
         console.error('参数面板初始化失败:', err);
       }
 
-      // 3. 异步请求 /api/dashboard 渲染看板 KPI、ECharts 走势图与数据治理表
+      // 4. 异步请求 /api/dashboard 渲染看板 KPI、ECharts 走势图与数据治理表
       try {
         loadDashboardData();
       } catch (err) {

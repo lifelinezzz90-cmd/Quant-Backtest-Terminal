@@ -62,7 +62,8 @@ from backtest.metrics import (
     plot_equity_curve
 )
 from backtest.logger import (
-    log_experiment_record
+    log_experiment_record,
+    determine_strategy_type
 )
 from strategies import (
     BaseStrategy,
@@ -593,13 +594,159 @@ def api_dashboard():
     })
 
 
+def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=None):
+    """
+    统一构建样本外指标与三折滚动验证结构：
+    1. 若传入 new_record，或能在 records/对比结果.csv 中匹配到已有记录 rec，则直接从 rec 提取指标；
+    2. 若未命中且回测区间覆盖 2023-01-01 ~ 2024-12-31，则实时切片/撮合计算样本外指标与三折夏普；
+    3. 组装与 /api/dashboard 结构完全一致的 oos_metrics 与 rolling_3fold。
+    """
+    is_covering_oos = (str(start_date) <= "2023-01-05" and str(end_date) >= "2024-12-25")
+    if not is_covering_oos:
+        return None, None
+
+    bm_summary = {}
+    if STRATEGY_CONFIG_JSON.exists():
+        try:
+            with open(STRATEGY_CONFIG_JSON, "r", encoding="utf-8") as f:
+                sdata = json.load(f)
+                bm_summary = sdata.get("benchmark_summary", {})
+        except Exception:
+            pass
+
+    bm_oos_ret = float(bm_summary.get("oos_annual_return", 0.0063))
+    bm_oos_dd = float(bm_summary.get("oos_max_drawdown", 0.2480))
+    f1_bm = float(bm_summary.get("fold1", -0.4326))
+    f2_bm = float(bm_summary.get("fold2", -0.6269))
+    f3_bm = float(bm_summary.get("fold3", 0.5104))
+
+    rec = None
+    if new_record and isinstance(new_record, dict) and "oos_annual_return" in new_record:
+        rec = new_record
+    elif RECORDS_CSV.exists():
+        try:
+            df_exp = pd.read_csv(RECORDS_CSV).fillna("")
+            strat_params = getattr(strategy, "params", {})
+            strat_type = determine_strategy_type(strategy.name, strat_params)
+
+            c_name = strategy.name
+            if strat_type == "TrendFollowing":
+                c_name = f"TF_{strat_params.get('short_window', 5)}_{strat_params.get('long_window', 40)}_{strat_params.get('rebalance_days', 5)}"
+            elif strat_type == "MeanReversion":
+                c_name = f"MR_{strat_params.get('window', 20)}_{strat_params.get('num_std', 1.5)}_{strat_params.get('exit_z', 0.0)}"
+            elif strat_type == "MultiFactor":
+                lb = strat_params.get("lookback_days", 20)
+                m = int(round(strat_params.get("momentum_weight", 0.5) * 10))
+                v = int(round(strat_params.get("volatility_weight", 0.5) * 10))
+                s = int(round(strat_params.get("sentiment_weight", 0.0) * 10))
+                c_name = f"MF_{lb}_M{m}V{v}S{s}"
+
+            candidates = df_exp[(df_exp["strategy_name"] == c_name) | (df_exp["strategy_name"] == strategy.name)]
+            if len(candidates) == 1:
+                rec = candidates.iloc[0].to_dict()
+            elif len(candidates) > 1:
+                for _, r in candidates.iterrows():
+                    p_val = r.get("params", "")
+                    try:
+                        p_dict = json.loads(p_val) if isinstance(p_val, str) else p_val
+                        match = True
+                        for k, v in strat_params.items():
+                            if k in p_dict and abs(float(p_dict[k]) - float(v)) > 1e-4:
+                                match = False
+                                break
+                        if match:
+                            rec = r.to_dict()
+                            break
+                    except Exception:
+                        pass
+                if rec is None and len(candidates) > 0:
+                    rec = candidates.iloc[0].to_dict()
+        except Exception:
+            pass
+
+    if rec:
+        try:
+            oos_ann = float(rec["oos_annual_return"])
+            oos_dd = float(rec["oos_max_drawdown"])
+            oos_sh = float(rec["oos_sharpe"])
+            oos_calmar = float(rec["oos_calmar"])
+            f1_strat = float(rec["fold1_sharpe"])
+            f2_strat = float(rec["fold2_sharpe"])
+            f3_strat = float(rec["fold3_sharpe"])
+        except Exception:
+            rec = None
+
+    if rec is None:
+        engine = BacktestEngine(initial_cash=INITIAL_CASH)
+        res_oos = engine.run(strategy, stocks, start_date="2023-01-01", end_date="2024-12-31")
+        m_oos = calculate_metrics(res_oos["equity_df"], bm, res_oos["trades_df"], initial_capital=INITIAL_CASH)
+        oos_ann = float(m_oos["annual_return"])
+        oos_dd = float(m_oos["max_drawdown"])
+        oos_sh = float(m_oos["sharpe_ratio"])
+        oos_calmar = float(m_oos["calmar_ratio"])
+
+        res_f1 = engine.run(strategy, stocks, start_date="2023-01-01", end_date="2023-08-31")
+        m_f1 = calculate_metrics(res_f1["equity_df"], bm, res_f1["trades_df"], initial_capital=INITIAL_CASH)
+        f1_strat = float(m_f1["sharpe_ratio"])
+
+        res_f2 = engine.run(strategy, stocks, start_date="2023-09-01", end_date="2024-04-30")
+        m_f2 = calculate_metrics(res_f2["equity_df"], bm, res_f2["trades_df"], initial_capital=INITIAL_CASH)
+        f2_strat = float(m_f2["sharpe_ratio"])
+
+        res_f3 = engine.run(strategy, stocks, start_date="2024-05-01", end_date="2024-12-31")
+        m_f3 = calculate_metrics(res_f3["equity_df"], bm, res_f3["trades_df"], initial_capital=INITIAL_CASH)
+        f3_strat = float(m_f3["sharpe_ratio"])
+
+    pass1 = bool(f1_strat > 0 and f1_strat >= f1_bm)
+    pass2 = bool(f2_strat > 0 and f2_strat >= f2_bm)
+    pass3 = bool(f3_strat > 0 and f3_strat >= f3_bm)
+
+    rolling_3fold = {
+        "fold1": {
+            "period": "2023.01 – 2023.08",
+            "strat_sharpe": round(f1_strat, 4),
+            "bm_sharpe": round(f1_bm, 4),
+            "excess": round(f1_strat - f1_bm, 4),
+            "pass": pass1
+        },
+        "fold2": {
+            "period": "2023.09 – 2024.04",
+            "strat_sharpe": round(f2_strat, 4),
+            "bm_sharpe": round(f2_bm, 4),
+            "excess": round(f2_strat - f2_bm, 4),
+            "pass": pass2
+        },
+        "fold3": {
+            "period": "2024.05 – 2024.12",
+            "strat_sharpe": round(f3_strat, 4),
+            "bm_sharpe": round(f3_bm, 4),
+            "excess": round(f3_strat - f3_bm, 4),
+            "pass": pass3
+        }
+    }
+    pass_cnt = sum(1 for f in [rolling_3fold["fold1"], rolling_3fold["fold2"], rolling_3fold["fold3"]] if f["pass"])
+    pct_val = int(pass_cnt / 3 * 100)
+    rolling_3fold["overall_pass"] = f"{pass_cnt}/3 ({pct_val}%)"
+
+    oos_metrics = {
+        "oos_annual_return": round(oos_ann, 4),
+        "oos_max_drawdown": round(oos_dd, 4),
+        "oos_sharpe": round(oos_sh, 4),
+        "oos_calmar": round(oos_calmar, 4),
+        "benchmark_annual_return": round(bm_oos_ret, 4),
+        "benchmark_max_drawdown": round(bm_oos_dd, 4)
+    }
+
+    return oos_metrics, rolling_3fold
+
+
 @flask_app.route("/api/backtest", methods=["POST"])
 def api_backtest():
     """
     实时调用高保真回测撮合引擎并记录实验
     """
     req = request.get_json() or {}
-    strategy_key = req.get("strategy", "trend")
+    strategy_key = req.get("strategy") or req.get("strategy_name", "trend")
     params = req.get("params", {})
     start_date = req.get("start_date", FULL_START_DATE)
     end_date = req.get("end_date", FULL_END_DATE)
@@ -662,6 +809,8 @@ def api_backtest():
     cummax = np.maximum.accumulate(nav_arr)
     drawdowns = ((cummax - nav_arr) / np.where(cummax > 0, cummax, 1.0) * -100.0).round(2).tolist()
 
+    oos_metrics, rolling_3fold = _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=new_record)
+
     return jsonify({
         "success": True,
         "strategy_name": strategy.name,
@@ -673,7 +822,9 @@ def api_backtest():
             "drawdown": drawdowns,
             "split_date": OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
         },
-        "new_record": new_record
+        "new_record": new_record,
+        "oos_metrics": oos_metrics,
+        "rolling_3fold": rolling_3fold
     })
 
 
@@ -683,7 +834,7 @@ def api_preview():
     只读预览回测：内存实时撮合并返回净值/KPI，严禁调用 log_experiment_record 写盘，不生成 PNG 图片
     """
     req = request.get_json() or {}
-    strategy_key = req.get("strategy", "trend")
+    strategy_key = req.get("strategy") or req.get("strategy_name", "trend")
     params = req.get("params", {})
     start_date = req.get("start_date", FULL_START_DATE)
     end_date = req.get("end_date", FULL_END_DATE)
@@ -728,11 +879,15 @@ def api_preview():
         "split_date": OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
     }
 
+    oos_metrics, rolling_3fold = _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date)
+
     return jsonify({
         "success": True,
         "strategy_name": strategy.name,
         "metrics": metrics,
-        "chart_data": chart_data
+        "chart_data": chart_data,
+        "oos_metrics": oos_metrics,
+        "rolling_3fold": rolling_3fold
     })
 
 
