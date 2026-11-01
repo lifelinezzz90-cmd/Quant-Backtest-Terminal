@@ -129,6 +129,40 @@ def setup_matplotlib_font():
     return selected_font
 
 
+
+# ==============================================================================
+# 6. 标准实验记录 Schema 25 列中英文双向映射字典 (UTF-8-SIG 中文直观表头)
+# ==============================================================================
+CSV_COLUMN_MAP = {
+    "experiment_id": "实验编号",
+    "strategy_type": "策略类型",
+    "strategy_name": "策略简称",
+    "params": "核心参数配置(JSON)",
+    "is_annual_return": "样本内年化收益(2019-2022)",
+    "is_max_drawdown": "样本内最大回撤",
+    "is_sharpe": "样本内夏普比率",
+    "is_calmar": "样本内卡玛比率",
+    "is_win_rate": "样本内胜率",
+    "oos_annual_return": "样本外年化收益(2023-2024)",
+    "oos_max_drawdown": "样本外最大回撤",
+    "oos_sharpe": "样本外夏普比率",
+    "oos_calmar": "样本外卡玛比率",
+    "oos_win_rate": "样本外胜率",
+    "fold1_sharpe": "样本外第1折夏普(23.01-23.08)",
+    "fold2_sharpe": "样本外第2折夏普(23.09-24.04)",
+    "fold3_sharpe": "样本外第3折夏普(24.05-24.12)",
+    "oos_3fold_pass": "三折稳健验证通过",
+    "full_annual_return": "全周期年化收益(2019-2024)",
+    "full_max_drawdown": "全周期最大回撤",
+    "full_sharpe": "全周期夏普比率",
+    "full_calmar": "全周期卡玛比率",
+    "full_win_rate": "全周期胜率",
+    "trade_count": "总成交笔数",
+    "rank_score": "综合寻优评分",
+}
+
+CSV_COLUMN_MAP_REV = {v: k for k, v in CSV_COLUMN_MAP.items()}
+
 if __name__ == "__main__":
     print(f"项目根目录: {PROJECT_ROOT}")
     print(f"固定股票池数量: {len(UNIVERSE_STOCKS)}")

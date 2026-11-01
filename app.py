@@ -38,6 +38,7 @@ from backtest.config import (
     RECORDS_DIR,
     RECORDS_RUNS_DIR,
     RECORDS_CSV,
+    CSV_COLUMN_MAP_REV,
     TEMPLATES_DIR,
     UNIVERSE_STOCKS,
     BENCHMARK_CODE,
@@ -271,18 +272,26 @@ def get_strategy_instance(strategy_name: str, params: dict, available_stocks: li
         sent_w = float(p.get("sentiment_weight", p.get("w_sentiment", 0.2)))
         clean_params = {
             "lookback_days": lb,
-            "mom_window": lb,
-            "vol_window": lb,
-            "rev_window": int(p.get("rev_window", 5)),
             "momentum_weight": mom_w,
-            "volatility_weight": vol_w,
-            "sentiment_weight": sent_w,
-            "top_k": top,
-            "top_n": top,
             "rebalance_days": reb,
-            "use_sentiment": bool(p.get("use_sentiment", True))
+            "sentiment_weight": sent_w,
+            "top_n": top,
+            "volatility_weight": vol_w
         }
-        return MultiFactorStrategy(params=clean_params)
+        m = int(round(mom_w * 10))
+        v = int(round(vol_w * 10))
+        s = int(round(sent_w * 10))
+        strat = MultiFactorStrategy(
+            name=f"MF_{lb}_M{m}V{v}S{s}",
+            lookback_days=lb,
+            momentum_weight=mom_w,
+            volatility_weight=vol_w,
+            sentiment_weight=sent_w,
+            rebalance_days=reb,
+            top_n=top
+        )
+        strat.params = clean_params
+        return strat
 
     elif s_name in ["buy_hold", "equal_weight", "buy_and_hold", "equalweightbuyhold"]:
         return EqualWeightBuyHoldStrategy(stocks=available_stocks, name="EqualWeightBuyHold", params=p)
@@ -485,8 +494,8 @@ def api_dashboard():
     # 2. 读取 records/对比结果.csv
     experiments = []
     if RECORDS_CSV.exists():
-        df_exp = pd.read_csv(RECORDS_CSV)
-        df_exp = df_exp.fillna("")
+        df_exp = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig").fillna("")
+        df_exp = df_exp.rename(columns=CSV_COLUMN_MAP_REV)
         experiments = df_exp.to_dict(orient="records")
 
     # 3. 读取 data/validation_report.json
@@ -625,7 +634,8 @@ def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=
         rec = new_record
     elif RECORDS_CSV.exists():
         try:
-            df_exp = pd.read_csv(RECORDS_CSV).fillna("")
+            df_exp = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig").fillna("")
+            df_exp = df_exp.rename(columns=CSV_COLUMN_MAP_REV)
             strat_params = getattr(strategy, "params", {})
             strat_type = determine_strategy_type(strategy.name, strat_params)
 

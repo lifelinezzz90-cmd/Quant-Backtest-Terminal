@@ -497,6 +497,76 @@
       color: #0f172a !important;
       background-color: #e2e8f0 !important;
     }
+
+    /* Custom number stepper (Problem 2) */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+      display: none;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    .num-stepper-wrap {
+      position: absolute;
+      right: 4px;
+      top: 3px;
+      bottom: 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+    }
+    .num-stepper-btn {
+      width: 16px;
+      height: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      font-size: 8px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s ease;
+    }
+    html[data-theme="dark"] .num-stepper-btn {
+      background-color: #232332;
+      color: #9d9db0;
+      border: 1px solid #3f3f52;
+    }
+    html[data-theme="dark"] .num-stepper-btn:hover {
+      background-color: #4f46e5;
+      color: #ffffff;
+      border-color: #6366f1;
+    }
+    html[data-theme="light"] .num-stepper-btn {
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    html[data-theme="light"] .num-stepper-btn:hover {
+      background-color: #4f46e5;
+      color: #ffffff;
+      border-color: #4f46e5;
+    }
+
+    /* Native Date Picker Theming (Problem 3) */
+    html[data-theme="dark"] input[type="date"] {
+      color-scheme: dark;
+    }
+    html[data-theme="light"] input[type="date"] {
+      color-scheme: light;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.75;
+      transition: opacity 0.15s ease;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
   </style>
 </head>
 <body class="bg-canvas-night text-text-on-dark min-h-screen antialiased selection:bg-primary-container selection:text-white transition-colors duration-200">
@@ -716,10 +786,17 @@
 
             <!-- Date Range Inputs -->
             <div class="space-y-1">
-              <label class="text-[11px] font-medium text-text-fog">回测区间 (全周期 1,456 交易日)</label>
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-medium text-text-fog">回测区间 (全周期 1,456 交易日)</label>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="setQuickDateRange('2019-01-01', '2024-12-31')" class="px-1.5 py-0.5 rounded text-[10px] bg-surface-raised hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/30 transition-colors cursor-pointer">全周期</button>
+                  <button type="button" onclick="setQuickDateRange('2019-01-01', '2022-12-31')" class="px-1.5 py-0.5 rounded text-[10px] bg-surface-raised hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/30 transition-colors cursor-pointer">样本内</button>
+                  <button type="button" onclick="setQuickDateRange('2023-01-01', '2024-12-31')" class="px-1.5 py-0.5 rounded text-[10px] bg-surface-raised hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/30 transition-colors cursor-pointer">样本外</button>
+                </div>
+              </div>
               <div class="grid grid-cols-2 gap-2">
-                <input id="inputStartDate" class="h-8 px-2.5 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs text-center focus:border-primary-container outline-none tabular-nums" type="text" value="2019-01-01"/>
-                <input id="inputEndDate" class="h-8 px-2.5 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs text-center focus:border-primary-container outline-none tabular-nums" type="text" value="2024-12-31"/>
+                <input id="inputStartDate" type="date" min="2019-01-01" max="2024-12-31" value="2019-01-01" onchange="clampDateRange()" class="h-8 px-2 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs text-center focus:border-primary-container outline-none tabular-nums cursor-pointer"/>
+                <input id="inputEndDate" type="date" min="2019-01-01" max="2024-12-31" value="2024-12-31" onchange="clampDateRange()" class="h-8 px-2 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs text-center focus:border-primary-container outline-none tabular-nums cursor-pointer"/>
               </div>
             </div>
 
@@ -1173,6 +1250,57 @@
     PARAM_TEMPLATES['multi_factor'] = PARAM_TEMPLATES['MultiFactor'];
     PARAM_TEMPLATES['mean_reversion'] = PARAM_TEMPLATES['MeanReversion'];
 
+    function stepParamValue(inputId, dir) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      const step = parseFloat(el.getAttribute('step') || '1');
+      const min = el.getAttribute('min') !== null ? parseFloat(el.getAttribute('min')) : -Infinity;
+      const max = el.getAttribute('max') !== null ? parseFloat(el.getAttribute('max')) : Infinity;
+      let cur = parseFloat(el.value || '0');
+      if (isNaN(cur)) cur = 0;
+
+      const stepStr = el.getAttribute('step') || '';
+      const decimals = stepStr.includes('.') ? (stepStr.split('.')[1] || '').length : 0;
+
+      let nextVal = cur + dir * step;
+      if (nextVal < min) nextVal = min;
+      if (nextVal > max) nextVal = max;
+
+      el.value = decimals > 0 ? nextVal.toFixed(decimals) : Math.round(nextVal).toString();
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function clampDateRange() {
+      const sEl = document.getElementById('inputStartDate');
+      const eEl = document.getElementById('inputEndDate');
+      if (!sEl || !eEl) return;
+
+      const minBound = '2019-01-01';
+      const maxBound = '2024-12-31';
+
+      if (!sEl.value || sEl.value < minBound) sEl.value = minBound;
+      if (sEl.value > maxBound) sEl.value = maxBound;
+
+      if (!eEl.value || eEl.value < minBound) eEl.value = minBound;
+      if (eEl.value > maxBound) eEl.value = maxBound;
+
+      if (sEl.value > eEl.value) {
+        eEl.value = sEl.value;
+      }
+
+      eEl.min = sEl.value;
+      sEl.max = eEl.value;
+    }
+
+    function setQuickDateRange(start, end) {
+      const sEl = document.getElementById('inputStartDate');
+      const eEl = document.getElementById('inputEndDate');
+      if (sEl) sEl.value = start;
+      if (eEl) eEl.value = end;
+      clampDateRange();
+    }
+
     function renderDynamicParams(strategyKey, customValues = {}) {
       const container = document.getElementById('dynamicParamsContainer');
       if (!container) return;
@@ -1186,8 +1314,12 @@
           <div class="space-y-1">
             <label class="text-[11px] font-medium text-text-fog whitespace-nowrap">${p.label}</label>
             <div class="relative">
-              <input id="param_${p.id}" class="w-full h-8 px-2.5 pr-10 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs focus:border-primary-container outline-none tabular-nums" type="${p.type}" min="${p.min}" max="${p.max}" ${stepAttr} value="${val}"/>
-              <span class="absolute right-2 top-2 text-[10px] text-text-fog num pointer-events-none">${p.unit}</span>
+              <input id="param_${p.id}" class="w-full h-8 px-2.5 pr-14 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark num text-xs focus:border-primary-container outline-none tabular-nums" type="${p.type}" min="${p.min}" max="${p.max}" ${stepAttr} value="${val}"/>
+              <span class="absolute right-6 top-2 text-[10px] text-text-fog num pointer-events-none">${p.unit}</span>
+              <div class="num-stepper-wrap">
+                <button type="button" class="num-stepper-btn" onclick="stepParamValue('param_${p.id}', 1)">▲</button>
+                <button type="button" class="num-stepper-btn" onclick="stepParamValue('param_${p.id}', -1)">▼</button>
+              </div>
             </div>
           </div>
         `;
@@ -1454,6 +1586,7 @@
             type: 'value',
             gridIndex: 0,
             scale: true,
+            max: function(val) { return Number((val.max * 1.06).toFixed(2)); },
             splitLine: { lineStyle: { color: gridLineColor, type: 'dashed' } },
             axisLabel: { color: textColor, fontSize: 10, fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif' }
           },
@@ -1500,10 +1633,48 @@
             },
             markPoint: {
               symbol: 'circle',
-              symbolSize: 6,
+              symbolSize: 8,
               data: [
-                { type: 'max', name: '最高净值', itemStyle: { color: '#10b981' } },
-                { type: 'min', name: '最低净值', itemStyle: { color: '#ef4444' } }
+                {
+                  type: 'max',
+                  name: '最高净值',
+                  itemStyle: { color: '#10b981', borderColor: isLight ? '#ffffff' : '#12121c', borderWidth: 1.5 },
+                  label: {
+                    show: true,
+                    position: 'top',
+                    distance: 8,
+                    formatter: function(p) { return '峰值 ' + Number(p.value).toFixed(4); },
+                    color: isLight ? '#065f46' : '#6ee7b7',
+                    backgroundColor: isLight ? 'rgba(236, 253, 245, 0.95)' : 'rgba(6, 78, 59, 0.88)',
+                    borderColor: isLight ? '#6ee7b7' : '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    padding: [2, 6],
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif'
+                  }
+                },
+                {
+                  type: 'min',
+                  name: '最低净值',
+                  itemStyle: { color: '#ef4444', borderColor: isLight ? '#ffffff' : '#12121c', borderWidth: 1.5 },
+                  label: {
+                    show: true,
+                    position: 'bottom',
+                    distance: 8,
+                    formatter: function(p) { return '谷值 ' + Number(p.value).toFixed(4); },
+                    color: isLight ? '#b91c1c' : '#fca5a5',
+                    backgroundColor: isLight ? 'rgba(254, 242, 242, 0.95)' : 'rgba(127, 29, 29, 0.88)',
+                    borderColor: isLight ? '#fca5a5' : '#ef4444',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    padding: [2, 6],
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif'
+                  }
+                }
               ]
             },
             markLine: {

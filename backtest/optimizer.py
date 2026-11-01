@@ -39,7 +39,8 @@ from backtest.config import (
     STRATEGY_DIR,
     BENCHMARK_CODE,
     ANNUAL_TRADING_DAYS,
-    RISK_FREE_RATE
+    RISK_FREE_RATE,
+    CSV_COLUMN_MAP
 )
 from backtest.engine import BacktestEngine, load_cleaned_data
 from backtest.metrics import calculate_metrics, plot_equity_curve
@@ -412,9 +413,10 @@ class GridOptimizer:
         RECORDS_RUNS_DIR.mkdir(parents=True, exist_ok=True)
         STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
 
-        # 1. 导出 records/对比结果.csv
+        # 1. 导出 records/对比结果.csv (中文直观表头 + UTF-8-SIG 编码)
         csv_path = RECORDS_DIR / "对比结果.csv"
-        df_results.to_csv(csv_path, index=False, encoding="utf-8-sig")
+        df_results_cn = df_results.rename(columns=CSV_COLUMN_MAP)
+        df_results_cn.to_csv(csv_path, index=False, encoding="utf-8-sig")
         logger.info(f"68组对比结果已成功导出至: {csv_path}")
 
         # 2. 导出 strategy/strategy.json

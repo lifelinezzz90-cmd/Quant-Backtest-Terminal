@@ -24,7 +24,9 @@ from backtest.config import (
     OUT_SAMPLE_START,
     OUT_SAMPLE_END,
     ANNUAL_TRADING_DAYS,
-    RISK_FREE_RATE
+    RISK_FREE_RATE,
+    CSV_COLUMN_MAP,
+    CSV_COLUMN_MAP_REV
 )
 
 # 严格与 backtest/optimizer.py 统一的 25 列标准实验记录 Schema (修复 B5)
@@ -211,10 +213,35 @@ def log_experiment_record(
             clean_strat_name = f"MF_{lb}_M{m}V{v}S{s}"
 
     # 对 params 字典按键名排序后再 json.dumps，确保与寻优表完全对齐
+    sorted_params = dict(sorted(params.items())) if isinstance(params, dict) else params
     params_str = (
-        json.dumps(dict(sorted(params.items())), ensure_ascii=False)
-        if isinstance(params, dict) else str(params)
+        json.dumps(sorted_params, ensure_ascii=False)
+        if isinstance(sorted_params, dict) else str(sorted_params)
     )
+
+    # 0. 查重防重复落盘：若 (strategy_type, sorted_params) 已存在于 records/对比结果.csv，直接返回已有记录
+    if RECORDS_CSV.exists() and RECORDS_CSV.stat().st_size > 0:
+        try:
+            df_exist = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig").fillna("")
+            df_exist = df_exist.rename(columns=CSV_COLUMN_MAP_REV)
+            candidates = df_exist[df_exist["strategy_type"] == strat_type]
+            for _, r in candidates.iterrows():
+                p_val = r.get("params", "")
+                try:
+                    p_dict = json.loads(p_val) if isinstance(p_val, str) else p_val
+                    if isinstance(p_dict, dict) and isinstance(sorted_params, dict):
+                        if set(p_dict.keys()) == set(sorted_params.keys()):
+                            match = True
+                            for k, v in sorted_params.items():
+                                if abs(float(p_dict[k]) - float(v)) > 1e-4:
+                                    match = False
+                                    break
+                            if match:
+                                return r.to_dict()
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     # 1. 归档单次明细 CSV 至 records/runs/
     detail_filename = f"{exp_id}_details.csv"
@@ -358,11 +385,12 @@ def log_experiment_record(
         "rank_score": rank_score
     }
 
-    # 4. 追加写入 records/对比结果.csv
+    # 4. 追加写入 records/对比结果.csv (中文直观表头 + UTF-8-SIG 编码)
     record_df = pd.DataFrame([record_data], columns=RECORD_COLUMNS)
+    record_df_cn = record_df.rename(columns=CSV_COLUMN_MAP)
     if not RECORDS_CSV.exists() or RECORDS_CSV.stat().st_size == 0:
-        record_df.to_csv(RECORDS_CSV, index=False, encoding="utf-8-sig")
+        record_df_cn.to_csv(RECORDS_CSV, index=False, encoding="utf-8-sig")
     else:
-        record_df.to_csv(RECORDS_CSV, mode="a", header=False, index=False, encoding="utf-8-sig")
+        record_df_cn.to_csv(RECORDS_CSV, mode="a", header=False, index=False, encoding="utf-8-sig")
 
     return record_data

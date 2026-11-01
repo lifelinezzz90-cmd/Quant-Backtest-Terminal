@@ -18,7 +18,8 @@ from backtest.config import (
     DEMO_DIR,
     RECORDS_CSV,
     STRATEGY_CONFIG_JSON,
-    setup_matplotlib_font
+    setup_matplotlib_font,
+    CSV_COLUMN_MAP_REV
 )
 from backtest.engine import load_cleaned_data, BacktestEngine
 from backtest.optimizer import create_strategy_instance
@@ -99,7 +100,8 @@ def main():
     # -------------------------------------------------------------
     # 图 2: 三大策略流派68组参数寻优分布
     # -------------------------------------------------------------
-    df_exp = pd.read_csv(RECORDS_CSV)
+    df_exp = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig")
+    df_exp = df_exp.rename(columns=CSV_COLUMN_MAP_REV)
     fig, ax = plt.subplots(figsize=(10, 6.2), dpi=300)
 
     type_map = {
