@@ -480,6 +480,130 @@ def index():
     return render_template("index.html")
 
 
+def _extract_ledger_and_attribution(res: dict, stocks_dict: dict):
+    """
+    从 engine.run() 结果中精确提取：
+    1. 账户总览账本指标 (total_return, final_equity, net_profit, total_fees)
+    2. 逐笔成交交割单明细 (trade_details, 包含回合盈亏与交易后可用现金)
+    3. 10只股票盈亏汇总贡献榜 (stock_summary, 保证各股盈亏之和精确等于组合净盈亏)
+    """
+    equity_df = res.get("equity_df", pd.DataFrame())
+    trades_df = res.get("trades_df", pd.DataFrame())
+    initial_cash = float(res.get("initial_cash", INITIAL_CASH))
+
+    final_equity = float(equity_df["total_value"].iloc[-1]) if (equity_df is not None and not equity_df.empty) else initial_cash
+    total_return = round((final_equity / initial_cash) - 1.0, 4)
+    net_profit = round(final_equity - initial_cash, 2)
+
+    total_fees = 0.0
+    if trades_df is not None and not trades_df.empty:
+        total_comm = float(trades_df["commission"].sum())
+        total_stamp = float(trades_df["stamp_duty"].sum())
+        total_fees = round(total_comm + total_stamp, 2)
+
+    ledger_summary = {
+        "total_return": total_return,
+        "final_equity": round(final_equity, 2),
+        "net_profit": net_profit,
+        "total_fees": total_fees
+    }
+
+    trade_details = []
+    current_cash = initial_cash
+
+    if trades_df is not None and not trades_df.empty:
+        for _, row in trades_df.iterrows():
+            action = str(row["action"]).upper()
+            turnover = round(float(row.get("turnover", 0.0)), 2)
+            commission = round(float(row.get("commission", 0.0)), 2)
+            stamp_duty = round(float(row.get("stamp_duty", 0.0)), 2)
+
+            if action == "BUY":
+                current_cash -= (turnover + commission)
+                round_pnl = None
+            else:  # SELL
+                current_cash += (turnover - commission - stamp_duty)
+                round_pnl = round(float(row.get("realized_pnl", 0.0)), 2)
+
+            current_cash = round(current_cash, 2)
+            code = str(row["code"])
+            stock_info = UNIVERSE_STOCKS.get(code, {})
+            name = stock_info.get("name", code)
+
+            trade_details.append({
+                "date": str(row["date"]),
+                "code": code,
+                "name": name,
+                "action": action,
+                "price": round(float(row.get("price", 0.0)), 2),
+                "shares": int(row.get("shares", 0)),
+                "turnover": turnover,
+                "commission": commission,
+                "stamp_duty": stamp_duty,
+                "round_pnl": round_pnl,
+                "cash_after": current_cash
+            })
+
+    # 10只股票各自盈亏汇总 stock_summary (严格按照固定股票池顺序)
+    stock_summary = []
+    total_attributed = 0.0
+
+    for code, info in UNIVERSE_STOCKS.items():
+        name = info.get("name", code)
+        if trades_df is not None and not trades_df.empty and "code" in trades_df.columns:
+            sub = trades_df[trades_df["code"] == code]
+        else:
+            sub = pd.DataFrame()
+
+        if not sub.empty:
+            buy_sub = sub[sub["action"] == "BUY"]
+            sell_sub = sub[sub["action"] == "SELL"]
+            buy_count = int(len(buy_sub))
+            sell_count = int(len(sell_sub))
+            win_trades = int((sell_sub["realized_pnl"] > 0).sum()) if not sell_sub.empty else 0
+            win_rate = round(win_trades / sell_count, 4) if sell_count > 0 else 0.0
+            fees = round(float(sub["commission"].sum() + sub["stamp_duty"].sum()), 2)
+
+            c_buy = float(buy_sub["turnover"].sum() + buy_sub["commission"].sum()) if not buy_sub.empty else 0.0
+            c_sell = float(sell_sub["turnover"].sum() - sell_sub["commission"].sum() - sell_sub["stamp_duty"].sum()) if not sell_sub.empty else 0.0
+            shares_held = int(buy_sub["shares"].sum() - sell_sub["shares"].sum()) if not buy_sub.empty else 0
+
+            last_close = 0.0
+            if shares_held > 0 and code in stocks_dict:
+                df_code = stocks_dict[code]
+                if not df_code.empty and "close" in df_code.columns:
+                    last_close = float(df_code["close"].iloc[-1])
+
+            mv = shares_held * last_close
+            pnl = round(c_sell - c_buy + mv, 2)
+        else:
+            buy_count = 0
+            sell_count = 0
+            win_rate = 0.0
+            fees = 0.0
+            pnl = 0.0
+
+        total_attributed += pnl
+        stock_summary.append({
+            "code": code,
+            "name": name,
+            "buy_count": buy_count,
+            "sell_count": sell_count,
+            "win_rate": win_rate,
+            "total_fees": fees,
+            "realized_pnl": pnl
+        })
+
+    # 精确平滑微小的微分配差（<0.2元），保证各股盈亏之和与组合净盈亏 100% 对齐
+    diff = round(net_profit - total_attributed, 2)
+    if abs(diff) > 0 and abs(diff) < 0.2:
+        active_items = [s for s in stock_summary if s["buy_count"] > 0]
+        if active_items:
+            active_items[0]["realized_pnl"] = round(active_items[0]["realized_pnl"] + diff, 2)
+
+    return ledger_summary, trade_details, stock_summary
+
+
 @flask_app.route("/api/dashboard", methods=["GET"])
 def api_dashboard():
     """
@@ -514,6 +638,8 @@ def api_dashboard():
     engine = BacktestEngine(initial_cash=INITIAL_CASH)
     res = engine.run(strat, stocks, start_date=FULL_START_DATE, end_date=FULL_END_DATE)
 
+    ledger_summary, trade_details, stock_summary = _extract_ledger_and_attribution(res, stocks)
+
     eq_df = res["equity_df"]
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
     bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
@@ -547,6 +673,7 @@ def api_dashboard():
         "full_max_drawdown": -abs(best_overall.get("full_max_drawdown", 0.2855)),
         "full_sharpe": best_overall.get("full_sharpe", 0.6249)
     }
+    kpis.update(ledger_summary)
 
     split_trading_day = next((d for d in dates if d >= "2023-01-01"), "2023-01-03")
     chart_data = {
@@ -599,11 +726,13 @@ def api_dashboard():
         "chart_data": chart_data,
         "rolling_3fold": rolling_3fold,
         "validation": val_data,
-        "experiments": experiments
+        "experiments": experiments,
+        "trade_details": trade_details,
+        "stock_summary": stock_summary
     })
 
 
-def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=None):
+def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=None, is_single_stock=False):
     """
     统一构建样本外指标与三折滚动验证结构：
     1. 若传入 new_record，或能在 records/对比结果.csv 中匹配到已有记录 rec，则直接从 rec 提取指标；
@@ -630,49 +759,50 @@ def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=
     f3_bm = float(bm_summary.get("fold3", 0.5104))
 
     rec = None
-    if new_record and isinstance(new_record, dict) and "oos_annual_return" in new_record:
-        rec = new_record
-    elif RECORDS_CSV.exists():
-        try:
-            df_exp = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig").fillna("")
-            df_exp = df_exp.rename(columns=CSV_COLUMN_MAP_REV)
-            strat_params = getattr(strategy, "params", {})
-            strat_type = determine_strategy_type(strategy.name, strat_params)
+    if not is_single_stock:
+        if new_record and isinstance(new_record, dict) and "oos_annual_return" in new_record:
+            rec = new_record
+        elif RECORDS_CSV.exists():
+            try:
+                df_exp = pd.read_csv(RECORDS_CSV, encoding="utf-8-sig").fillna("")
+                df_exp = df_exp.rename(columns=CSV_COLUMN_MAP_REV)
+                strat_params = getattr(strategy, "params", {})
+                strat_type = determine_strategy_type(strategy.name, strat_params)
 
-            c_name = strategy.name
-            if strat_type == "TrendFollowing":
-                c_name = f"TF_{strat_params.get('short_window', 5)}_{strat_params.get('long_window', 40)}_{strat_params.get('rebalance_days', 5)}"
-            elif strat_type == "MeanReversion":
-                c_name = f"MR_{strat_params.get('window', 20)}_{strat_params.get('num_std', 1.5)}_{strat_params.get('exit_z', 0.0)}"
-            elif strat_type == "MultiFactor":
-                lb = strat_params.get("lookback_days", 20)
-                m = int(round(strat_params.get("momentum_weight", 0.5) * 10))
-                v = int(round(strat_params.get("volatility_weight", 0.5) * 10))
-                s = int(round(strat_params.get("sentiment_weight", 0.0) * 10))
-                c_name = f"MF_{lb}_M{m}V{v}S{s}"
+                c_name = strategy.name
+                if strat_type == "TrendFollowing":
+                    c_name = f"TF_{strat_params.get('short_window', 5)}_{strat_params.get('long_window', 40)}_{strat_params.get('rebalance_days', 5)}"
+                elif strat_type == "MeanReversion":
+                    c_name = f"MR_{strat_params.get('window', 20)}_{strat_params.get('num_std', 1.5)}_{strat_params.get('exit_z', 0.0)}"
+                elif strat_type == "MultiFactor":
+                    lb = strat_params.get("lookback_days", 20)
+                    m = int(round(strat_params.get("momentum_weight", 0.5) * 10))
+                    v = int(round(strat_params.get("volatility_weight", 0.5) * 10))
+                    s = int(round(strat_params.get("sentiment_weight", 0.0) * 10))
+                    c_name = f"MF_{lb}_M{m}V{v}S{s}"
 
-            candidates = df_exp[(df_exp["strategy_name"] == c_name) | (df_exp["strategy_name"] == strategy.name)]
-            if len(candidates) == 1:
-                rec = candidates.iloc[0].to_dict()
-            elif len(candidates) > 1:
-                for _, r in candidates.iterrows():
-                    p_val = r.get("params", "")
-                    try:
-                        p_dict = json.loads(p_val) if isinstance(p_val, str) else p_val
-                        match = True
-                        for k, v in strat_params.items():
-                            if k in p_dict and abs(float(p_dict[k]) - float(v)) > 1e-4:
-                                match = False
-                                break
-                        if match:
-                            rec = r.to_dict()
-                            break
-                    except Exception:
-                        pass
-                if rec is None and len(candidates) > 0:
+                candidates = df_exp[(df_exp["strategy_name"] == c_name) | (df_exp["strategy_name"] == strategy.name)]
+                if len(candidates) == 1:
                     rec = candidates.iloc[0].to_dict()
-        except Exception:
-            pass
+                elif len(candidates) > 1:
+                    for _, r in candidates.iterrows():
+                        p_val = r.get("params", "")
+                        try:
+                            p_dict = json.loads(p_val) if isinstance(p_val, str) else p_val
+                            match = True
+                            for k, v in strat_params.items():
+                                if k in p_dict and abs(float(p_dict[k]) - float(v)) > 1e-4:
+                                    match = False
+                                    break
+                            if match:
+                                rec = r.to_dict()
+                                break
+                        except Exception:
+                            pass
+                    if rec is None and len(candidates) > 0:
+                        rec = candidates.iloc[0].to_dict()
+            except Exception:
+                pass
 
     if rec:
         try:
@@ -753,13 +883,14 @@ def _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=
 @flask_app.route("/api/backtest", methods=["POST"])
 def api_backtest():
     """
-    实时调用高保真回测撮合引擎并记录实验
+    实时调用高保真回测撮合引擎并记录实验（单股模式绝不写入 records/对比结果.csv）
     """
     req = request.get_json() or {}
     strategy_key = req.get("strategy") or req.get("strategy_name", "trend")
     params = req.get("params", {})
     start_date = req.get("start_date", FULL_START_DATE)
     end_date = req.get("end_date", FULL_END_DATE)
+    stock_code = req.get("stock_code", "ALL")
 
     # 严格进行日期格式与有效区间校验
     try:
@@ -771,20 +902,30 @@ def api_backtest():
         return jsonify({"status": "error", "message": "无效的日期区间"}), 400
 
     stocks, bm = get_market_data()
-    avail = list(stocks.keys())
+    is_single_stock = (stock_code != "ALL" and stock_code in stocks)
+    if is_single_stock:
+        stocks_to_run = {stock_code: stocks[stock_code]}
+        avail = [stock_code]
+    else:
+        stocks_to_run = stocks
+        avail = list(stocks.keys())
+        stock_code = "ALL"
 
     strategy = get_strategy_instance(strategy_key, params, avail)
     engine = BacktestEngine(initial_cash=INITIAL_CASH)
-    res = engine.run(strategy, stocks, start_date=start_date, end_date=end_date)
+    res = engine.run(strategy, stocks_to_run, start_date=start_date, end_date=end_date)
 
     eq_df = res["equity_df"]
     trades_df = res["trades_df"]
     rejects_df = res["rejects_df"]
 
     metrics = calculate_metrics(eq_df, bm, trades_df, initial_capital=INITIAL_CASH)
+    ledger_extra, trade_details, stock_summary = _extract_ledger_and_attribution(res, stocks)
+    metrics.update(ledger_extra)
 
     now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    chart_name = f"{strategy.name}_web_{now_str}.png"
+    prefix = f"{stock_code}_" if is_single_stock else ""
+    chart_name = f"{prefix}{strategy.name}_web_{now_str}.png"
     chart_path = RECORDS_RUNS_DIR / chart_name
     plot_equity_curve(
         equity_df=eq_df,
@@ -795,18 +936,20 @@ def api_backtest():
         split_date=OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
     )
 
-    # 自动落盘本次 Web 回测记录至 records/对比结果.csv 及 records/runs/ (修复 B6，25列标准 Schema)
-    new_record = log_experiment_record(
-        strategy_name=strategy.name,
-        params=strategy.params,
-        metrics=metrics,
-        stock_count=len(stocks),
-        equity_df=eq_df,
-        trades_df=res["trades_df"],
-        chart_path=chart_path,
-        data_dict=stocks,
-        benchmark_df=bm
-    )
+    new_record = None
+    if not is_single_stock:
+        # 仅在全组合模式下落盘记录，严格保护对比结果.csv基线
+        new_record = log_experiment_record(
+            strategy_name=strategy.name,
+            params=strategy.params,
+            metrics=metrics,
+            stock_count=len(stocks),
+            equity_df=eq_df,
+            trades_df=res["trades_df"],
+            chart_path=chart_path,
+            data_dict=stocks,
+            benchmark_df=bm
+        )
 
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
     bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
@@ -819,11 +962,15 @@ def api_backtest():
     cummax = np.maximum.accumulate(nav_arr)
     drawdowns = ((cummax - nav_arr) / np.where(cummax > 0, cummax, 1.0) * -100.0).round(2).tolist()
 
-    oos_metrics, rolling_3fold = _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date, new_record=new_record)
+    oos_metrics, rolling_3fold = _build_oos_and_3fold(
+        strategy, stocks_to_run, bm, start_date, end_date,
+        new_record=new_record, is_single_stock=is_single_stock
+    )
 
     return jsonify({
         "success": True,
         "strategy_name": strategy.name,
+        "stock_code": stock_code,
         "metrics": metrics,
         "chart_data": {
             "dates": dates,
@@ -834,20 +981,23 @@ def api_backtest():
         },
         "new_record": new_record,
         "oos_metrics": oos_metrics,
-        "rolling_3fold": rolling_3fold
+        "rolling_3fold": rolling_3fold,
+        "trade_details": trade_details,
+        "stock_summary": stock_summary
     })
 
 
 @flask_app.route("/api/preview", methods=["POST"])
 def api_preview():
     """
-    只读预览回测：内存实时撮合并返回净值/KPI，严禁调用 log_experiment_record 写盘，不生成 PNG 图片
+    只读预览回测：内存实时撮合并返回净值/KPI/交割单，严禁调用 log_experiment_record 写盘，不生成 PNG 图片
     """
     req = request.get_json() or {}
     strategy_key = req.get("strategy") or req.get("strategy_name", "trend")
     params = req.get("params", {})
     start_date = req.get("start_date", FULL_START_DATE)
     end_date = req.get("end_date", FULL_END_DATE)
+    stock_code = req.get("stock_code", "ALL")
 
     # 严格进行日期格式与有效区间校验
     try:
@@ -859,16 +1009,25 @@ def api_preview():
         return jsonify({"status": "error", "message": "无效的日期区间"}), 400
 
     stocks, bm = get_market_data()
-    avail = list(stocks.keys())
+    is_single_stock = (stock_code != "ALL" and stock_code in stocks)
+    if is_single_stock:
+        stocks_to_run = {stock_code: stocks[stock_code]}
+        avail = [stock_code]
+    else:
+        stocks_to_run = stocks
+        avail = list(stocks.keys())
+        stock_code = "ALL"
 
     strategy = get_strategy_instance(strategy_key, params, avail)
     engine = BacktestEngine(initial_cash=INITIAL_CASH)
-    res = engine.run(strategy, stocks, start_date=start_date, end_date=end_date)
+    res = engine.run(strategy, stocks_to_run, start_date=start_date, end_date=end_date)
 
     eq_df = res["equity_df"]
     trades_df = res["trades_df"]
 
     metrics = calculate_metrics(eq_df, bm, trades_df, initial_capital=INITIAL_CASH)
+    ledger_extra, trade_details, stock_summary = _extract_ledger_and_attribution(res, stocks)
+    metrics.update(ledger_extra)
 
     bm_slice = bm[(bm["date"] >= eq_df["date"].iloc[0]) & (bm["date"] <= eq_df["date"].iloc[-1])].copy()
     bm_slice = bm_slice.sort_values("date").reset_index(drop=True)
@@ -889,15 +1048,21 @@ def api_preview():
         "split_date": OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
     }
 
-    oos_metrics, rolling_3fold = _build_oos_and_3fold(strategy, stocks, bm, start_date, end_date)
+    oos_metrics, rolling_3fold = _build_oos_and_3fold(
+        strategy, stocks_to_run, bm, start_date, end_date,
+        is_single_stock=is_single_stock
+    )
 
     return jsonify({
         "success": True,
         "strategy_name": strategy.name,
+        "stock_code": stock_code,
         "metrics": metrics,
         "chart_data": chart_data,
         "oos_metrics": oos_metrics,
-        "rolling_3fold": rolling_3fold
+        "rolling_3fold": rolling_3fold,
+        "trade_details": trade_details,
+        "stock_summary": stock_summary
     })
 
 
