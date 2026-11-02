@@ -15,3 +15,4 @@
 | 2026-10-26 23:20 | WorkBuddy / Trae | 最终封包与全流程验真：前端动态绑定三大策略模型全周期矩阵并对齐预设按钮参数；统一 backtest/logger 与 optimizer 评估口径消除净值切片偏差；恢复撮合引擎标准±10%涨跌停限制；启动脚本延时调整为 3s；全量回归测试 100% 通过 |
 | 2026-10-27 11:30 | WorkBuddy / Trae | 盲审缺陷清零与黄金基线封锁：三折验证静态初值与闭环笔数动态绑定、浅色高对比度加固、logger 策略简称与参数排序对齐、/api/backtest 日期防呆、ETL 报告去除硬编码，打标 v1.0-verified |
 | 2026-11-02 19:59 | WorkBuddy / Trae | GitHub 旗舰级发布：红队审查累计 29 项缺陷清零后，Playwright 无头 Edge 实机截取双主题高清截图×4（深/浅首屏 + 下半屏审计区）、README 重写为旗舰门面（6 徽章 / 3 分钟复现 / CLI 速查 / 三策略绩效表 / 三折验证表 / 四重审计表）、复现配置加固（Python 3.8-3.12 依赖放宽 + 启动.bat Conda 与数据双自愈 + .gitignore 防误提交）、中文表头 CSV 导出核验、新设备 git clone 四项盲测全 PASS，打标 v1.2-release 并发布至 GitHub |
+| 2026-11-02 21:17 | WorkBuddy / Trae | 评委终审收官打磨：提交信息.txt 更新提交日期与 GitHub 仓库地址（master / v1.2-release）、移除 implementation_plan / project_memory / 任务书等内部过程文档使根目录 100% 对齐任务书第六章（Antigravity 字样随 implementation_plan.md 一并根除）、核验 records/对比结果.csv 第 25 列综合寻优评分完整（25 列 × 69 行）、配置 GitHub About/Topics 并发布 v1.2-release 正式 Release |
