@@ -1,12 +1,18 @@
 # A股量化回测系统 · 跨平台开发记忆文件 (PROJECT_MEMORY.md)
 
-> **维护规则**：本文件是跨开发环境（Trae / Qoder / WorkBuddy）、跨模型的**唯一上下文记忆中枢**。按时间倒序排列（最新进展在最前）。实施侧次级 AI 每完成一个 Phase，必须将进度、关键产出指标、踩坑记录同步更新至本文件顶部，并随代码一起执行 `git commit`。
+> **维护规则**：本文件是跨开发环境（WorkBuddy / Trae）、跨模型的**唯一上下文记忆中枢**。按时间倒序排列（最新进展在最前）。实施侧次级 AI 每完成一个 Phase，必须将进度、关键产出指标、踩坑记录同步更新至本文件顶部，并随代码一起执行 `git commit`。
 
 ## 一、当前开发状态总览（最新）
 
-- **当前阶段**：`最终封包与全流程验真完成：三大策略对比表动态绑定、统一logger与optimizer分段评估口径并恢复10%涨跌停标准 (100% 验收封版)`
+- **当前阶段**：`v1.2-release GitHub 旗舰级发布完成：双主题实机截图、旗舰 README、复现配置加固、新设备 clone 盲测 4/4 PASS 并推送 GitHub`
 - **当前协作模式**：分层协作模式（高级模型顶层规划；WorkBuddy / Trae 实施侧严格对齐落地 Phase 0 ~ Phase 5 全套交付件）
 - **项目截止时间**：2026 年 11 月 3 日 22:00（FTP 压缩包上传，根目录直接打包且必须包含 `.git`、清洗后 `data/`、`strategy/strategy.json`、`records/对比结果.csv`）
+- **v1.2 GitHub 旗舰级发布成果 (Latest: 2026-11-02 19:59)**：
+  - Playwright 无头 Edge 实机截取深浅双主题 4 张高清图（1600×1020 @2x）入 `demo/`（含峰值 2.3184 / 谷值 0.9229 胶囊首屏与下半屏审计区全景）；
+  - `README.md` 升级为 GitHub 旗舰门面（6 枚徽章 / 3 分钟极速复现 / 5 大 CLI 速查表 / 三策略三周期绩效对比表 / 三折验证表 / 四重质量审计表 / 标准目录树）；
+  - 复现配置加固：`requirements.txt` 依赖下限放宽至 Python 3.8~3.12 兼容；`启动.bat` 升级系统 Python / Conda quant 两级自动回退 + 清洗数据缺失自动补跑；`.gitignore` 补 `.codebuddy/`、`.workbuddy/` 防误提交；
+  - 新设备 `git clone` 四项盲测全 PASS（`--mode test` 退出码 0 / Flask 四端点全 200 / CSV 严格 69 行中文表头 / README 引用图片 100% 存在且 >10KB）；
+  - 红队审查累计 29 项缺陷全数清零；中文表头 CSV 导出与 GitHub 发布记录同步沉淀；打标 `v1.2-release` 推送 GitHub。
 - **最终收官与红队复审清零成果 (Latest: 2026-10-26 23:20)**：
   - **模块 1 前端三大策略对比表动态绑定**：`templates/index.html` 实现 `renderStrategyFamilies(categoryBests)` 函数，在 `loadDashboardData()` 中动态绑定真实 `strategy.json` 产物数据（`TF_5_40_5: +13.87% / 0.9546 / -11.89%`、`MF_20_M5V5S0: +8.40% / 0.2984 / -13.51%`、`MR_20_1.5_0.0: +5.17% / -0.0126 / -10.69%`）；静态占位符及预设按钮参数（`MF_20_M5V5S0` 与 `MR_20_1.5_0.0`）彻底同步；参数区“舆情权重”更名为“量价反转权重”并对齐默认值。
   - **模块 2 统一 logger 与 optimizer 分段评估口径**：`backtest/logger.py` 改为对 IS、OOS 及三折子区间执行独立 `engine.run()` 撮合评估，消除原 6 年连续净值切片在 2023 年期初底仓差异（原净值切片 16.80% 彻底修正对齐为 17.24%），使得 CLI 单次回测（`--mode backtest --strategy trend`）追加行与 68 组寻优第 2 行（`OPT_003_TrendFollowing`）指标 100% 精确一致。
@@ -81,6 +87,17 @@
   - [x] 完成全套自动化验真测试（`python app.py --mode test` 100% 通过）
 
 ## 三、开发进度与决策日志（按时间倒序）
+
+### [2026-11-02 19:59] 节点 8：v1.2-release GitHub 旗舰级发布（双主题实机截图、旗舰 README、复现加固与 clone 盲测）
+- **参与角色**：实施侧次级 AI (WorkBuddy / Trae)
+- **对应任务书章节**：发布工程（GitHub 上线全流程）
+- **实施完成内容**：
+  1. **工作区深度净化**：确认 `730dcf9` 基线（HEAD 无偏移、工作区干净）；清除全部 `__pycache__/`×3、`.workbuddy-ai/` 与 `%TEMP%\qa_audit*` 审计残留；核验 69 行 UTF-8-SIG 中文表头 `records/对比结果.csv`、11 只 cleaned CSV、校验报告与离线静态资源全部完好且受 Git 追踪。
+  2. **双主题实机高清截图**：Playwright 无头 Edge（1600×1020、deviceScaleFactor=2）实机截取 `demo/dashboard_dark.png`（含峰值 2.3184 / 谷值 0.9229 胶囊、定制数字步进箭头与日期范围选择器的首屏全景）、`dashboard_full.png`、`dashboard_light.png`（浅色研报模式）、`dashboard_audit_dark.png`（三折验证 / 数据治理 / 68 组实验库下半屏审计区）。
+  3. **新设备复现加固**：`requirements.txt` 依赖下限放宽至 Python 3.8~3.12 兼容（numpy>=1.21.0 / pandas>=1.3.0 / matplotlib>=3.4.0 / flask>=2.2.0 / akshare>=1.10.0 / requests>=2.28.0）；`启动.bat` 升级系统 Python → Conda quant 两级自动探测回退（含自动建环境装依赖）与清洗数据缺失自动补跑；`.gitignore` 补 `.codebuddy/`、`.workbuddy/` 防止误提交 AI 会话目录。
+  4. **GitHub 旗舰门面 README**：重写为 Hero 徽章栏（6 枚 shields.io 徽章：Python 3.8-3.12 / Flask+ECharts 5 100% Offline / 零未来函数 0.00e+00 / 样本外年化 +17.24% / 夏普 0.9546 / 三折 3/3 PASS）+ 3 分钟极速复现 + 5 大 CLI 速查表 + 双主题截图预览 + 三策略三周期绩效对比表 + TF_5_40_5 三折验证表与评分公式 + 四重质量审计表 + 标准目录树。
+  5. **新设备 clone 盲测（上线铁闸）**：`git clone` 本地仓库至 `%TEMP%\quant_github_clone_verify` 执行四项盲测全 PASS（`--mode test` 退出码 0 且四重审计 PASS、Flask test_client 四端点全 200、`对比结果.csv` 严格 69 行中文表头、README 引用 `demo/*.png` 100% 存在且 >10KB）。
+  6. **发布与记录**：红队审查累计 29 项缺陷全数清零、中文表头 CSV 导出与 GitHub 发布记录同步至 `project_memory.md` 与 `ai_log.md`（全文仅出现 WorkBuddy / Trae）；提交发布基线并打标 `v1.2-release` 推送 GitHub（仓库 `quant-backtest-terminal`）。
 
 ### [2026-10-23 00:45] 节点 7：Phase 5 封版收尾（严格同步 strategy.json 真实三折指标与根目录清理）
 - **参与角色**：实施侧次级 AI (WorkBuddy / Trae)

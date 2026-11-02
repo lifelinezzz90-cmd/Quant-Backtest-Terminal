@@ -39,6 +39,8 @@ venv.bak/
 .idea/
 .vscode/
 .workbuddy-ai/
+.codebuddy/
+.workbuddy/
 *.swp
 *.swo
 *~
