@@ -182,6 +182,11 @@
       color: #b91c1c !important;
       font-weight: 600 !important;
     }
+    html[data-theme="light"] .text-amber-400,
+    html[data-theme="light"] [class*="text-amber-400"] {
+      color: #b45309 !important;
+      font-weight: 600 !important;
+    }
     html[data-theme="light"] .text-primary,
     html[data-theme="light"] [class*="text-primary"],
     html[data-theme="light"] .text-indigo-400,
@@ -736,20 +741,20 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/15">
           <div class="flex items-center space-x-2">
             <h2 class="text-base font-semibold text-text-on-dark whitespace-nowrap">累计净值与水下动态回撤</h2>
-            <span class="text-xs text-text-fog ml-1 whitespace-nowrap" id="currentStrategyTag">TrendFollowing TF_5_40_5</span>
+            <span class="text-xs text-text-fog ml-1 whitespace-nowrap" id="currentStrategyTag">趋势跟踪 (5日/40日均线) · 全部10只组合</span>
           </div>
 
           <!-- Strategy Preset Selector Pills (flex-wrap) -->
           <div class="flex flex-wrap items-center gap-1.5 text-xs py-0.5">
             <button onclick="applyPreset('TF')" id="presetBtn_TF" class="preset-pill preset-pill-active">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
-              <span>趋势跟踪最优 (TF_5_40_5)</span>
+              <span>趋势跟踪最优 (5日/40日均线)</span>
             </button>
             <button onclick="applyPreset('MF')" id="presetBtn_MF" class="preset-pill preset-pill-inactive">
-              <span>多因子打分 (MF_20_M5V5S0)</span>
+              <span>多因子打分 (20日动量+低波)</span>
             </button>
             <button onclick="applyPreset('MR')" id="presetBtn_MR" class="preset-pill preset-pill-inactive">
-              <span>均值回复 (MR_20_1.5_0.0)</span>
+              <span>均值回复 (20日布林带)</span>
             </button>
           </div>
         </div>
@@ -808,7 +813,7 @@
               </label>
               <div class="relative">
                 <select id="stockSelect" onchange="onStockSelectChange()" class="w-full h-9 pl-3 pr-8 rounded-lg bg-canvas-night border border-outline-variant/30 text-text-on-dark text-xs focus:ring-1 focus:ring-primary-container focus:border-primary-container outline-none transition-all cursor-pointer">
-                  <option value="ALL">全部 10 只股票组合（任务书标准多股轮动）</option>
+                  <option value="ALL">全部 10 只核心股票组合（多股等权/打分轮动）</option>
                   <option value="600519">600519 贵州茅台 (白酒)</option>
                   <option value="601318">601318 中国平安 (保险)</option>
                   <option value="601398">601398 工商银行 (银行)</option>
@@ -872,7 +877,7 @@
 
               <div class="grid grid-cols-2 gap-2">
                 <button onclick="applyPreset('TF')" type="button" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center transition-colors cursor-pointer">
-                  <span class="whitespace-nowrap">重置基准 (TF)</span>
+                  <span class="whitespace-nowrap">重置为默认最优策略</span>
                 </button>
                 <a href="/api/export_csv" download="对比结果.csv" class="btn-secondary h-8 rounded-full bg-surface-container-high hover:bg-surface-bright text-text-fog hover:text-text-on-dark border border-outline-variant/20 text-xs flex items-center justify-center transition-colors text-center cursor-pointer">
                   <span class="whitespace-nowrap">导出对比 CSV</span>
@@ -1105,10 +1110,10 @@
                   <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
                     <div class="flex items-center space-x-1.5">
                       <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-                      <span>趋势跟踪 (TrendFollowing)</span>
+                      <span>趋势跟踪（双均线）</span>
                     </div>
                   </td>
-                  <td class="py-2 text-text-fog whitespace-nowrap">TF_5_40_5</td>
+                  <td class="py-2 text-text-fog whitespace-nowrap">5日/40日均线 · 5日调仓</td>
                   <td class="py-2 text-right text-emerald-400 font-medium tabular-nums whitespace-nowrap">+13.87%</td>
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">0.9546</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-11.89%</td>
@@ -1118,10 +1123,10 @@
                   <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
                     <div class="flex items-center space-x-1.5">
                       <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-                      <span>多因子打分 (MultiFactor)</span>
+                      <span>多因子打分（动量+低波）</span>
                     </div>
                   </td>
-                  <td class="py-2 text-text-fog whitespace-nowrap">MF_20_M5V5S0</td>
+                  <td class="py-2 text-text-fog whitespace-nowrap">20日回看 · 动量50%+低波50%</td>
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+8.40%</td>
                   <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">0.2984</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-13.51%</td>
@@ -1131,10 +1136,10 @@
                   <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
                     <div class="flex items-center space-x-1.5">
                       <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
-                      <span>均值回复 (MeanReversion)</span>
+                      <span>均值回复（布林带）</span>
                     </div>
                   </td>
-                  <td class="py-2 text-text-fog whitespace-nowrap">MR_20_1.5_0.0</td>
+                  <td class="py-2 text-text-fog whitespace-nowrap">20日布林带 · 1.5倍标准差</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+5.17%</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-0.0126</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-10.69%</td>
@@ -1248,7 +1253,7 @@
             <tr>
               <th>实验编号</th>
               <th>策略类型</th>
-              <th>策略名 / 参数配置</th>
+              <th class="whitespace-nowrap">核心参数配置（点击任意行可实时预览）</th>
               <th style="text-align: right;">样本内年化</th>
               <th style="text-align: right;">样本内夏普</th>
               <th style="text-align: right;">样本外年化</th>
@@ -1424,6 +1429,7 @@
         renderChart(activeChartData);
       } else if (dashboardData && dashboardData.chart_data) {
         renderChart(dashboardData.chart_data);
+        safeSetText('currentStrategyTag', '趋势跟踪 (5日/40日均线) · 全部10只组合');
       }
     }
 
@@ -1573,22 +1579,22 @@
       if (presetType === 'TF') {
         stratKey = 'TrendFollowing';
         p = { short_window: 5, long_window: 40, rebalance_days: 5, max_positions: 8 };
-        name = 'TrendFollowing TF_5_40_5';
+        name = '趋势跟踪 (5日/40日均线)';
       } else if (presetType === 'MF') {
         stratKey = 'MultiFactor';
         p = { lookback_days: 20, momentum_weight: 0.5, volatility_weight: 0.5, sentiment_weight: 0.0, rebalance_days: 5, top_n: 8, top_k: 8 };
-        name = 'MultiFactor MF_20_M5V5S0';
+        name = '多因子打分 (20日动量+低波)';
       } else if (presetType === 'MR') {
         stratKey = 'MeanReversion';
         p = { window: 20, num_std: 1.5, exit_z: 0.0, max_positions: 6 };
-        name = 'MeanReversion MR_20_1.5_0.0';
+        name = '均值回复 (20日布林带)';
       }
 
       // 复位回测标的为全组合（预设=基准组合视图，D1 修复）
       const stockSel = document.getElementById('stockSelect');
       const tradeFilter = document.getElementById('tradeStockFilter');
       const badge = document.getElementById('stockSelectBadge');
-      if (stockSel && stockSel.value !== 'ALL') stockSel.value = 'ALL';
+      if (stockSel) stockSel.value = 'ALL';
       if (tradeFilter) tradeFilter.value = 'ALL';
       if (badge) {
         badge.textContent = '组合多股轮动';
@@ -1599,7 +1605,7 @@
       if (stratSelect) stratSelect.value = stratKey;
       renderDynamicParams(stratKey, p);
       updateStrategyRuleDesc(stratKey);
-      previewExperiment(stratKey, p, name);
+      previewExperiment(stratKey, p, name, 'ALL');
     }
 
     // Format Helpers
@@ -1673,7 +1679,7 @@
       if (!bar) return;
 
       const code = stockCode || (document.getElementById('stockSelect')?.value || 'ALL');
-      let targetName = '全部10只股票组合（任务书多股轮动）';
+      let targetName = '全部 10 只核心股票组合（多股等权/打分轮动）';
       if (code !== 'ALL' && UNIVERSE_MAP[code]) {
         targetName = `${code} ${UNIVERSE_MAP[code].name} (${UNIVERSE_MAP[code].industry})`;
       } else if (code !== 'ALL') {
@@ -2191,13 +2197,58 @@
       currentChart.setOption(option, true);
     }
 
+    function formatStrategyTitle(strategyType, params, rawName) {
+      let p = {};
+      try {
+        p = typeof params === 'string' ? JSON.parse(params) : (params || {});
+      } catch (_) {}
+
+      const sType = String(strategyType || '').toLowerCase();
+      if (sType.includes('trend') || sType.includes('tf')) {
+        const sw = p.short_window !== undefined ? p.short_window : 5;
+        const lw = p.long_window !== undefined ? p.long_window : 40;
+        return `趋势跟踪 (${sw}日/${lw}日均线)`;
+      } else if (sType.includes('multi') || sType.includes('mf') || sType.includes('factor')) {
+        const lb = p.lookback_days !== undefined ? p.lookback_days : 20;
+        return `多因子打分 (${lb}日动量+低波)`;
+      } else if (sType.includes('reversion') || sType.includes('mr') || sType.includes('mean')) {
+        const win = p.window !== undefined ? p.window : 20;
+        return `均值回复 (${win}日布林带)`;
+      }
+
+      const name = String(rawName || '');
+      if (name.startsWith('TF_')) {
+        const parts = name.split('_');
+        return `趋势跟踪 (${parts[1] || 5}日/${parts[2] || 40}日均线)`;
+      } else if (name.startsWith('MF_')) {
+        const parts = name.split('_');
+        return `多因子打分 (${parts[1] || 20}日动量+低波)`;
+      } else if (name.startsWith('MR_')) {
+        const parts = name.split('_');
+        return `均值回复 (${parts[1] || 20}日布林带)`;
+      }
+
+      return rawName || '趋势跟踪 (5日/40日均线)';
+    }
+
+    function formatCurrentStrategyTag(res, curStock) {
+      const code = curStock || res?.stock_code || document.getElementById('stockSelect')?.value || 'ALL';
+      const stratTitle = formatStrategyTitle(res?.strategy_type, res?.params, res?.strategy_name);
+      if (code !== 'ALL') {
+        const info = UNIVERSE_MAP[code];
+        const stockName = info ? info.name : code;
+        return `${code} ${stockName} · ${stratTitle}`;
+      }
+      return `${stratTitle} · 全部10只组合`;
+    }
+
     // Unified Backtest/Preview Results Application (R1 & R2)
     function applyBacktestResult(res, startDate, endDate) {
       if (!res || !res.success) return;
 
       const curStock = res.stock_code || document.getElementById('stockSelect')?.value || 'ALL';
       const stockBadgeStr = curStock === 'ALL' ? '' : ` [${curStock}]`;
-      safeSetText('currentStrategyTag', (res.strategy_name || '') + stockBadgeStr + (res.is_preview ? ' (实验预览)' : ' (自定义回测)'));
+      safeSetText('currentStrategyTag', formatCurrentStrategyTag(res, curStock));
       renderChart(res.chart_data);
 
       // 更新顶部人话账本摘要栏
@@ -2392,47 +2443,54 @@
       tbody.innerHTML = html;
     }
 
-    // Format Parameters to Compact Chinese Badges (M9)
-    function formatParamsToBadges(strategyType, paramsVal, stratName) {
+    // Format Parameters to Pure Intuitive Chinese Capsules
+    function formatParamsToCapsules(strategyType, paramsVal) {
       let p = {};
       try {
         p = typeof paramsVal === 'string' ? JSON.parse(paramsVal) : (paramsVal || {});
       } catch (_) {}
 
       let badges = [];
-      if (stratName) {
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-raised border border-outline-variant/30 text-text-on-dark font-medium whitespace-nowrap">${stratName}</span>`);
-      }
+      const sType = String(strategyType || '').toLowerCase();
 
-      if (strategyType === 'TrendFollowing' || strategyType === 'trend') {
-        const shortW = p.short_window !== undefined ? p.short_window : 5;
-        const longW = p.long_window !== undefined ? p.long_window : 40;
-        const reb = p.rebalance_days !== undefined ? p.rebalance_days : 5;
-        const maxP = p.max_positions !== undefined ? p.max_positions : 8;
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">均线 MA(${shortW}, ${longW})</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${reb}日调仓</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">上限 ${maxP} 只</span>`);
-      } else if (strategyType === 'MultiFactor' || strategyType === 'multi_factor') {
+      if (sType.includes('trend') || sType.includes('tf')) {
+        const sw = p.short_window !== undefined ? p.short_window : 5;
+        const lw = p.long_window !== undefined ? p.long_window : 40;
+        const rb = p.rebalance_days !== undefined ? p.rebalance_days : 5;
+        const mp = p.max_positions !== undefined ? p.max_positions : 8;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">短期${sw}日 / 长期${lw}日均线</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">每${rb}日调仓</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">最多持仓${mp}只</span>`);
+      } else if (sType.includes('multi') || sType.includes('factor') || sType.includes('mf')) {
         const lb = p.lookback_days !== undefined ? p.lookback_days : 20;
-        const mom = p.momentum_weight !== undefined ? Math.round(p.momentum_weight * 10) : 5;
-        const vol = p.volatility_weight !== undefined ? Math.round(p.volatility_weight * 10) : 5;
-        const rev = p.sentiment_weight !== undefined ? Math.round(p.sentiment_weight * 10) : 0;
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">回看 ${lb}日</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">动${mom}/低波${vol}/反${rev}</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${p.rebalance_days || 5}日调仓</span>`);
-      } else if (strategyType === 'MeanReversion' || strategyType === 'mean_reversion') {
+        const mw = p.momentum_weight !== undefined ? Number(p.momentum_weight) : 0.5;
+        const vw = p.volatility_weight !== undefined ? Number(p.volatility_weight) : 0.5;
+        const sw = p.sentiment_weight !== undefined ? Number(p.sentiment_weight) : 0.0;
+        const rb = p.rebalance_days !== undefined ? p.rebalance_days : 5;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">回看${lb}日</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">动量${Math.round(mw*100)}% / 低波${Math.round(vw*100)}% / 情绪${Math.round(sw*100)}%</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">每${rb}日调仓</span>`);
+      } else if (sType.includes('reversion') || sType.includes('mean') || sType.includes('mr')) {
         const win = p.window !== undefined ? p.window : 20;
         const std = p.num_std !== undefined ? p.num_std : 1.5;
-        const exitZ = p.exit_z !== undefined ? p.exit_z : 0.0;
-        const maxP = p.max_positions !== undefined ? p.max_positions : 6;
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">布林 ${win}日 (${std}σ)</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">平仓阈值 ${exitZ}σ</span>`);
-        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">上限 ${maxP} 只</span>`);
+        const ez = p.exit_z !== undefined ? p.exit_z : 0.0;
+        const mp = p.max_positions !== undefined ? p.max_positions : 6;
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${win}日布林带 (${std}倍标准差)</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">回归${ez}σ卖出</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">最多持仓${mp}只</span>`);
       } else {
         badges.push(`<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/20 text-text-fog whitespace-nowrap">${JSON.stringify(p)}</span>`);
       }
 
       return `<div class="inline-flex items-center flex-wrap gap-1 text-[11px] num">${badges.join('')}</div>`;
+    }
+
+    function formatParamsToBadges(strategyType, paramsVal, stratName) {
+      return formatParamsToCapsules(strategyType, paramsVal);
+    }
+
+    function previewExperimentById(expId) {
+      return onSelectExperimentRow(expId);
     }
 
     // Select and preview experiment on row click (M2 & M3 & R1 & R2)
@@ -2576,17 +2634,35 @@
         const oosSharpeColor = num(item.oos_sharpe) >= 0 ? 'text-emerald-400' : 'text-red-400';
         const fullAnnColor = num(item.full_annual_return) >= 0 ? 'text-emerald-400' : 'text-red-400';
 
-        // M9: Escaped title quotes and compact badges
+        // M9: Escaped title quotes and compact capsules
+        let displayId = item.experiment_id || 'EXP';
+        const optMatch = String(item.experiment_id || '').match(/^OPT_(\d+)/);
+        if (optMatch) {
+          displayId = `#${optMatch[1]}`;
+        } else if (String(item.experiment_id || '').startsWith('EXP_')) {
+          displayId = '自定义';
+        }
+
+        const STRAT_TYPE_ZH = {
+          TrendFollowing: '趋势跟踪',
+          trend: '趋势跟踪',
+          MultiFactor: '多因子打分',
+          multi_factor: '多因子打分',
+          MeanReversion: '均值回复',
+          mean_reversion: '均值回复'
+        };
+        const displayStratType = STRAT_TYPE_ZH[item.strategy_type] || item.strategy_type;
+
         const titleEscaped = String(item.params || '').replace(/"/g, '&quot;');
-        const paramsBadges = formatParamsToBadges(item.strategy_type, item.params, item.strategy_name);
+        const paramsBadges = formatParamsToCapsules(item.strategy_type, item.params);
 
         html += `
-          <tr ${rowStyle} onclick="onSelectExperimentRow('${item.experiment_id}')" class="cursor-pointer transition-colors hover:bg-surface-bright/30">
+          <tr ${rowStyle} onclick="previewExperimentById('${item.experiment_id}')" class="cursor-pointer transition-colors hover:bg-surface-bright/30">
             <td class="font-semibold whitespace-nowrap">
-              <span class="text-primary num">${item.experiment_id || 'EXP'}</span>
+              <span class="text-primary num">${displayId}</span>
               ${badge}
             </td>
-            <td class="whitespace-nowrap">${item.strategy_type}</td>
+            <td class="whitespace-nowrap">${displayStratType}</td>
             <td class="text-[11px] num max-w-sm" title="${titleEscaped}">${paramsBadges}</td>
             <td style="text-align: right;" class="${isAnnColor} num tabular-nums whitespace-nowrap">${fmtPct(item.is_annual_return)}</td>
             <td style="text-align: right;" class="${isSharpeColor} num tabular-nums whitespace-nowrap">${fmtNum(item.is_sharpe, 2)}</td>
@@ -2663,15 +2739,30 @@
       if (!tbody) return;
 
       const configs = [
-        { key: 'TrendFollowing', label: '趋势跟踪 (TrendFollowing)', dotClass: 'bg-primary-container', rank: '第 1 名', rankClass: 'bg-brand-indigo-dim text-primary' },
-        { key: 'MultiFactor', label: '多因子打分 (MultiFactor)', dotClass: 'bg-secondary', rank: '第 2 名', rankClass: 'bg-surface-container-high text-text-fog' },
-        { key: 'MeanReversion', label: '均值回复 (MeanReversion)', dotClass: 'bg-outline', rank: '第 3 名', rankClass: 'bg-surface-container-high text-text-fog' }
+        { key: 'TrendFollowing', label: '趋势跟踪（双均线）', dotClass: 'bg-primary-container', rank: '第 1 名', rankClass: 'bg-brand-indigo-dim text-primary', defaultName: '5日/40日均线 · 5日调仓' },
+        { key: 'MultiFactor', label: '多因子打分（动量+低波）', dotClass: 'bg-secondary', rank: '第 2 名', rankClass: 'bg-surface-container-high text-text-fog', defaultName: '20日回看 · 动量50%+低波50%' },
+        { key: 'MeanReversion', label: '均值回复（布林带）', dotClass: 'bg-outline', rank: '第 3 名', rankClass: 'bg-surface-container-high text-text-fog', defaultName: '20日布林带 · 1.5倍标准差' }
       ];
 
       let html = '';
       configs.forEach(cfg => {
         const item = categoryBests[cfg.key] || {};
-        const name = item.strategy_name || '-';
+        let name = cfg.defaultName;
+        if (item.params) {
+          let p = {};
+          try {
+            p = typeof item.params === 'string' ? JSON.parse(item.params) : item.params;
+          } catch (_) {}
+          if (cfg.key === 'TrendFollowing' && p.short_window && p.long_window) {
+            name = `${p.short_window}日/${p.long_window}日均线 · ${p.rebalance_days || 5}日调仓`;
+          } else if (cfg.key === 'MultiFactor' && p.lookback_days) {
+            const m = Math.round((p.momentum_weight || 0.5) * 100);
+            const v = Math.round((p.volatility_weight || 0.5) * 100);
+            name = `${p.lookback_days}日回看 · 动量${m}%+低波${v}%`;
+          } else if (cfg.key === 'MeanReversion' && p.window) {
+            name = `${p.window}日布林带 · ${p.num_std || 1.5}倍标准差`;
+          }
+        }
         const annRet = item.full_annual_return !== undefined ? ((item.full_annual_return >= 0 ? '+' : '') + (item.full_annual_return * 100).toFixed(2) + '%') : '-';
         const oosSharpe = item.oos_sharpe !== undefined ? Number(item.oos_sharpe).toFixed(4) : '-';
         const oosDd = item.oos_max_drawdown !== undefined ? ('-' + Math.abs(item.oos_max_drawdown * 100).toFixed(2) + '%') : '-';
@@ -2718,6 +2809,7 @@
 
         // Render Chart
         renderChart(dashboardData.chart_data);
+        safeSetText('currentStrategyTag', '趋势跟踪 (5日/40日均线) · 全部10只组合');
 
         // Render Trade Ledger Table & Stock Summary Table
         activeTradeDetails = dashboardData.trade_details || [];

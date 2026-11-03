@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 A股量化回测系统 · 统一入口程序 (app.py)
-对应《A股量化回测系统·任务书.md》与《IMPLEMENTATION_PLAN.md》
+全周期数据治理、多策略网格寻优与高保真撮合验证终端
 
 提供跨平台统一 CLI 命令行交互入口与 Flask Web 看板服务：
 - --mode validate: 数据质量校验与清洗流水线（支持 --sample 快速样例模式）
@@ -971,7 +971,7 @@ def api_backtest():
 
     return jsonify({
         "success": True,
-        "strategy_name": strategy.name,
+        "strategy_type": strategy.__class__.__name__, "strategy_name": strategy.name, "params": strategy.params,
         "stock_code": stock_code,
         "metrics": metrics,
         "chart_data": {
@@ -1057,7 +1057,7 @@ def api_preview():
 
     return jsonify({
         "success": True,
-        "strategy_name": strategy.name,
+        "strategy_type": strategy.__class__.__name__, "strategy_name": strategy.name, "params": strategy.params,
         "stock_code": stock_code,
         "metrics": metrics,
         "chart_data": chart_data,
