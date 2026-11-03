@@ -535,7 +535,7 @@ def _extract_ledger_and_attribution(res: dict, stocks_dict: dict):
                 "code": code,
                 "name": name,
                 "action": action,
-                "price": round(float(row.get("price", 0.0)), 2),
+                "price": round(float(row.get("price", 0.0)), 4),
                 "shares": int(row.get("shares", 0)),
                 "turnover": turnover,
                 "commission": commission,
@@ -923,18 +923,20 @@ def api_backtest():
     ledger_extra, trade_details, stock_summary = _extract_ledger_and_attribution(res, stocks)
     metrics.update(ledger_extra)
 
-    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    prefix = f"{stock_code}_" if is_single_stock else ""
-    chart_name = f"{prefix}{strategy.name}_web_{now_str}.png"
-    chart_path = RECORDS_RUNS_DIR / chart_name
-    plot_equity_curve(
-        equity_df=eq_df,
-        benchmark_df=bm,
-        title=f"{strategy.name} 策略净值 ({metrics['start_date']} ~ {metrics['end_date']})",
-        save_path=chart_path,
-        metrics=metrics,
-        split_date=OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
-    )
+    # 仅全组合模式落盘净值图，单股模式不向 records/runs/ 写入任何文件（D6 修复）
+    chart_path = None
+    if not is_single_stock:
+        now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        chart_name = f"{strategy.name}_web_{now_str}.png"
+        chart_path = RECORDS_RUNS_DIR / chart_name
+        plot_equity_curve(
+            equity_df=eq_df,
+            benchmark_df=bm,
+            title=f"{strategy.name} 策略净值 ({metrics['start_date']} ~ {metrics['end_date']})",
+            save_path=chart_path,
+            metrics=metrics,
+            split_date=OUT_SAMPLE_START if start_date <= OUT_SAMPLE_START <= end_date else None
+        )
 
     new_record = None
     if not is_single_stock:

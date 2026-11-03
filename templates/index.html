@@ -580,6 +580,12 @@
       color: #334155;
     }
 
+    html[data-theme="light"] .text-amber-400,
+    html[data-theme="light"] [class*="text-amber-400"] {
+      color: #b45309 !important;
+      font-weight: 600 !important;
+    }
+
     /* Ledger Scrollbar */
     .ledger-scroll::-webkit-scrollbar {
       width: 6px;
@@ -964,8 +970,8 @@
             <!-- Direction Filter Buttons -->
             <div class="inline-flex rounded-lg border border-outline-variant/30 p-0.5 bg-canvas-night">
               <button type="button" id="tradeDirBtn_ALL" onclick="setTradeDirectionFilter('ALL')" class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors bg-primary-container text-white cursor-pointer">全部</button>
-              <button type="button" id="tradeDirBtn_BUY" onclick="setTradeDirectionFilter('BUY')" class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors text-text-fog hover:text-text-on-dark cursor-pointer">仅买入 (BUY)</button>
-              <button type="button" id="tradeDirBtn_SELL" onclick="setTradeDirectionFilter('SELL')" class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors text-text-fog hover:text-text-on-dark cursor-pointer">仅卖出 (SELL)</button>
+              <button type="button" id="tradeDirBtn_BUY" onclick="setTradeDirectionFilter('BUY')" class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors text-text-fog hover:text-text-on-dark cursor-pointer">仅看买入</button>
+              <button type="button" id="tradeDirBtn_SELL" onclick="setTradeDirectionFilter('SELL')" class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors text-text-fog hover:text-text-on-dark cursor-pointer">仅看卖出</button>
             </div>
           </div>
         </div>
@@ -1106,7 +1112,7 @@
                   <td class="py-2 text-right text-emerald-400 font-medium tabular-nums whitespace-nowrap">+13.87%</td>
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">0.9546</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-11.89%</td>
-                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-brand-indigo-dim text-primary text-[10px]">Rank #1</span></td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-brand-indigo-dim text-primary text-[10px]">第 1 名</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
                   <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
@@ -1119,7 +1125,7 @@
                   <td class="py-2 text-right text-emerald-400 tabular-nums whitespace-nowrap">+8.40%</td>
                   <td class="py-2 text-right text-text-on-dark tabular-nums whitespace-nowrap">0.2984</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-13.51%</td>
-                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #2</span></td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">第 2 名</span></td>
                 </tr>
                 <tr class="hover:bg-surface-bright/20">
                   <td class="py-2 text-text-on-dark font-medium whitespace-nowrap">
@@ -1132,7 +1138,7 @@
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">+5.17%</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-0.0126</td>
                   <td class="py-2 text-right text-text-fog tabular-nums whitespace-nowrap">-10.69%</td>
-                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">Rank #3</span></td>
+                  <td class="py-2 text-right whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-text-fog text-[10px]">第 3 名</span></td>
                 </tr>
               </tbody>
             </table>
@@ -1267,7 +1273,7 @@
           <span class="text-primary font-medium">样本外夏普最高: <strong class="num tabular-nums" id="lblMaxSharpe">0.9546</strong></span>
         </div>
         <div class="num text-text-fog/80 tabular-nums" id="lblShowingCount">
-          Showing 1 - 68 of 68 entries
+          当前显示第 1 – 68 条，共 68 组实验记录
         </div>
       </div>
     </section>
@@ -1578,6 +1584,18 @@
         name = 'MeanReversion MR_20_1.5_0.0';
       }
 
+      // 复位回测标的为全组合（预设=基准组合视图，D1 修复）
+      const stockSel = document.getElementById('stockSelect');
+      const tradeFilter = document.getElementById('tradeStockFilter');
+      const badge = document.getElementById('stockSelectBadge');
+      if (stockSel && stockSel.value !== 'ALL') stockSel.value = 'ALL';
+      if (tradeFilter) tradeFilter.value = 'ALL';
+      if (badge) {
+        badge.textContent = '组合多股轮动';
+        badge.className = 'text-[11px] text-emerald-400 whitespace-nowrap font-normal';
+      }
+      renderTradeLedgerTable();
+
       if (stratSelect) stratSelect.value = stratKey;
       renderDynamicParams(stratKey, p);
       updateStrategyRuleDesc(stratKey);
@@ -1715,7 +1733,7 @@
               <div class="text-[10px] text-text-fog">${info.industry || ''}</div>
             </td>
             <td class="py-2.5 px-1 text-center num text-xs">
-              <span class="text-text-on-dark">${item.buy_count}</span> <span class="text-text-fog/60">/</span> <span class="text-text-on-dark">${item.sell_count}</span>
+              <span class="text-text-on-dark">${item.buy_count}</span> <span class="text-text-fog">/</span> <span class="text-text-on-dark">${item.sell_count}</span>
             </td>
             <td class="py-2.5 px-1 text-right num text-xs ${item.win_rate >= 0.5 ? 'text-emerald-400' : 'text-text-fog'}">
               ${wrStr}
@@ -1822,7 +1840,7 @@
               <div class="text-[10px] text-text-fog">${t.code}</div>
             </td>
             <td class="py-2 px-1.5 text-center whitespace-nowrap">${actionBadge}</td>
-            <td class="py-2 px-1.5 text-right whitespace-nowrap text-text-on-dark">¥${Number(t.price || 0).toFixed(2)}</td>
+            <td class="py-2 px-1.5 text-right whitespace-nowrap text-text-on-dark">¥${Number(t.price || 0).toFixed(4).replace(/0{1,2}$/, '')}</td>
             <td class="py-2 px-1.5 text-right whitespace-nowrap text-text-on-dark">${Number(t.shares || 0).toLocaleString()}</td>
             <td class="py-2 px-1.5 text-right whitespace-nowrap text-text-on-dark">${turnoverStr}</td>
             <td class="py-2 px-1.5 text-right whitespace-nowrap">${commHtml}</td>
@@ -2527,7 +2545,7 @@
       const num = (v) => (v === '-' || v === undefined || v === null) ? -999999 : Number(v);
       const maxSharpe = list.length > 0 ? Math.max(...list.map(e => num(e.oos_sharpe))) : 0.9546;
       safeSetText('lblMaxSharpe', fmtNum(maxSharpe, 4));
-      safeSetText('lblShowingCount', `Showing 1 - ${list.length} of ${countAll} entries`);
+      safeSetText('lblShowingCount', `当前显示第 1 – ${list.length} 条，共 ${countAll} 组实验记录`);
 
       let html = '';
       list.forEach((item) => {
@@ -2645,9 +2663,9 @@
       if (!tbody) return;
 
       const configs = [
-        { key: 'TrendFollowing', label: '趋势跟踪 (TrendFollowing)', dotClass: 'bg-primary-container', rank: 'Rank #1', rankClass: 'bg-brand-indigo-dim text-primary' },
-        { key: 'MultiFactor', label: '多因子打分 (MultiFactor)', dotClass: 'bg-secondary', rank: 'Rank #2', rankClass: 'bg-surface-container-high text-text-fog' },
-        { key: 'MeanReversion', label: '均值回复 (MeanReversion)', dotClass: 'bg-outline', rank: 'Rank #3', rankClass: 'bg-surface-container-high text-text-fog' }
+        { key: 'TrendFollowing', label: '趋势跟踪 (TrendFollowing)', dotClass: 'bg-primary-container', rank: '第 1 名', rankClass: 'bg-brand-indigo-dim text-primary' },
+        { key: 'MultiFactor', label: '多因子打分 (MultiFactor)', dotClass: 'bg-secondary', rank: '第 2 名', rankClass: 'bg-surface-container-high text-text-fog' },
+        { key: 'MeanReversion', label: '均值回复 (MeanReversion)', dotClass: 'bg-outline', rank: '第 3 名', rankClass: 'bg-surface-container-high text-text-fog' }
       ];
 
       let html = '';
@@ -2728,7 +2746,7 @@
         ['kpiAnnualReturn', 'kpiExcessReturn', 'kpiFullAnnual', 'kpiMaxDrawdown', 'kpiFullDrawdown', 'kpiSharpeRatio', 'kpiSharpeRank', 'kpiCalmarRatio', 'kpiWinRate', 'kpiTradeCount'].forEach(id => {
           safeSetText(id, '--');
         });
-        safeSetText('lblShowingCount', 'Showing 0 entries (数据加载异常)');
+        safeSetText('lblShowingCount', '当前显示 0 条，共 0 组实验记录（数据加载异常）');
 
         const container = document.getElementById('mainChartContainer');
         if (container) {
