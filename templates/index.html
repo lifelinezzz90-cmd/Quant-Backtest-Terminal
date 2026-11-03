@@ -1348,42 +1348,76 @@
       }
     }
 
-    // Top Nav Segmented Control Handler
+    // Top Nav Segmented Control Handler & Scroll-Spy Conflict Resolution
+    let navClickLockUntil = 0;
+    let preferredRow3Id = 'cv-validation'; // 记录用户在并排的第3/第4板块中最后点击的是哪一个
+
     function setActiveNav(el) {
+      if (!el) return;
       document.querySelectorAll('.terminal-nav-link').forEach(link => {
         link.classList.remove('nav-link-active');
         link.classList.add('nav-link-inactive');
       });
       el.classList.add('nav-link-active');
       el.classList.remove('nav-link-inactive');
+
+      const href = el.getAttribute('href') || '';
+      if (href === '#cv-validation' || href === '#data-governance') {
+        preferredRow3Id = href.slice(1);
+      }
+      // 锁定平滑滚动期间的 scroll-spy 覆盖（持续 900ms）
+      navClickLockUntil = Date.now() + 900;
     }
 
-    // Scroll-Spy Linkage (L8)
     function initScrollSpy() {
-      const navSections = [
-        { id: 'params-lib', hash: '#params-lib' },
-        { id: 'data-governance', hash: '#data-governance' },
-        { id: 'cv-validation', hash: '#cv-validation' },
-        { id: 'trade-ledger', hash: '#trade-ledger' },
-        { id: 'overview', hash: '#overview' }
-      ];
+      const sectionIds = ['overview', 'trade-ledger', 'cv-validation', 'data-governance', 'params-lib'];
+      // 当用户主动滚轮或触摸滚动时，立即解除点击锁
+      const unlock = () => { navClickLockUntil = 0; };
+      window.addEventListener('wheel', unlock, { passive: true });
+      window.addEventListener('touchmove', unlock, { passive: true });
+
       window.addEventListener('scroll', () => {
-        const scrollPos = window.scrollY + 120;
-        for (const sec of navSections) {
-          const el = document.getElementById(sec.id);
-          if (el && scrollPos >= el.offsetTop) {
-            document.querySelectorAll('.terminal-nav-link').forEach(link => {
-              if (link.getAttribute('href') === sec.hash) {
-                link.classList.add('nav-link-active');
-                link.classList.remove('nav-link-inactive');
-              } else {
-                link.classList.remove('nav-link-active');
-                link.classList.add('nav-link-inactive');
-              }
-            });
-            break;
+        if (Date.now() < navClickLockUntil) return;
+
+        const threshold = 140;
+        let currentId = 'overview';
+
+        // 1. 若已滚动至页面底部附近，或 #params-lib 已进入视口上半区，直接高亮第 5 个（#params-lib）
+        const paramsEl = document.getElementById('params-lib');
+        const atBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 40);
+        if (paramsEl && (atBottom || paramsEl.getBoundingClientRect().top <= Math.max(threshold, window.innerHeight * 0.35))) {
+          currentId = 'params-lib';
+        } else {
+          // 2. 依次检查前序板块
+          const cvEl = document.getElementById('cv-validation');
+          const dgEl = document.getElementById('data-governance');
+          const tradeEl = document.getElementById('trade-ledger');
+
+          if (cvEl && dgEl && cvEl.getBoundingClientRect().top <= threshold) {
+            // 若 #cv-validation 与 #data-governance 并排同行（top 差距 < 20px），优先使用 preferredRow3Id（默认第3个 cv-validation）
+            const sameRow = Math.abs(cvEl.getBoundingClientRect().top - dgEl.getBoundingClientRect().top) < 20;
+            if (sameRow) {
+              currentId = preferredRow3Id;
+            } else {
+              currentId = (dgEl.getBoundingClientRect().top <= threshold) ? 'data-governance' : 'cv-validation';
+            }
+          } else if (tradeEl && tradeEl.getBoundingClientRect().top <= threshold) {
+            currentId = 'trade-ledger';
+          } else {
+            currentId = 'overview';
           }
         }
+
+        document.querySelectorAll('.terminal-nav-link').forEach(link => {
+          const href = link.getAttribute('href');
+          if (href === '#' + currentId) {
+            link.classList.add('nav-link-active');
+            link.classList.remove('nav-link-inactive');
+          } else {
+            link.classList.remove('nav-link-active');
+            link.classList.add('nav-link-inactive');
+          }
+        });
       }, { passive: true });
     }
 
