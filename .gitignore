@@ -52,7 +52,7 @@ Thumbs.db
 tmp/
 temp/
 
-# 任务书硬性规定保留项（严禁忽略）：
+# 发布版本必须保留的数据目录：
 # data/ (含清洗后数据与校验报告)
 # strategy/ (含自研最优配置 strategy.json)
 # records/ (含对比结果.csv与实验记录)
@@ -62,3 +62,7 @@ temp/
 !strategy/**
 !records/
 !records/**
+
+# 本地私有记录（不入库，磁盘保留）
+ai_log.md
+提交信息.txt

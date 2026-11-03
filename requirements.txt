@@ -1,5 +1,4 @@
 # A股量化回测系统 - 核心依赖清单（兼容 Python 3.8 ~ 3.12）
-# 对应《任务书》第三部分与《IMPLEMENTATION_PLAN.md》核心依赖
 # 推荐安装命令：pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 numpy>=1.21.0
